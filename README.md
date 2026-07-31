@@ -1,5 +1,5 @@
 # Hangman Solver
-The best hangman solver with letter probabilities and a clean, easy-to-use interface. It will always be free with no ads, and the interface is designed for both mobile and desktop.   
+The best hangman solver with letter probabilities based on an 11,202-word dictionary, sorted into 8 tiers based on real-world frequency, and a clean, easy-to-use interface. It will always be free with no ads, and the interface is designed for both mobile and desktop.   
 Here is the link to the website: **[hangman-solver.edgeone.dev](https://hangman-solver.edgeone.dev/)**  
 
 **Why a new Hangman Solver?**  
@@ -10,7 +10,7 @@ There are numerous hangman solvers online, so why make another one? I had notice
 -Clean interface/Intuitive  
 -Works on mobile and desktop  
 -Displays letter probabilities and possible words  
--Uses an 11,202-word dictionary sorted into 8 tiers based on real-world frequency.  
+-Uses an 11,202-word dictionary, sorted into 8 tiers based on real-world frequency.  
 -You can add custom words easily  
 -Built so you can use it easily while you are actually playing Hangman or another word game.  
 -Light/Dark mode
