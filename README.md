@@ -1,4 +1,4 @@
-# Hangman-Solver
+# Hangman Solver
 The best hangman solver with letter probabilities and a clean, easy-to-use interface.  
 Here is the link to the website: **[hangman-solver.edgeone.dev](https://hangman-solver.edgeone.dev/)**  
 It will always be free with no ads, and the interface is designed for both mobile and desktop.  
