@@ -701,10 +701,6 @@ function onTileKeydown(e){
     }
     if(prev){
       e.preventDefault();
-      prev.value = '';
-      syncPatternFromTiles();
-      renderKeyboard();
-      solve();
       prev.focus();
     }
   } else if(e.key === 'ArrowLeft'){
