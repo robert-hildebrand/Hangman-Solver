@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hangman Solver with Letter Probabilities</title>
+<meta name="description" content="Free online hangman solver. Enter what letters you know, and it finds the best letter to guess next, using a massive English dictionary sorted by real-world frequency. Works on single words and multi-word phrases.">
+<meta name="keywords" content="hangman solver, hangman helper, word puzzle solver, hangman cheat, word game solver, best hangman solver, hangman letter probabilities, hangman solver good interface, hangman, word solver, letter probabilities">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://hangman-solver.edgeone.dev/">
+<meta name="google-site-verification" content="ewqyXWdOEvkWBO2vr2f8i_VDwh9nia4RY2IInTUOnGI" />
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hangman-solver.edgeone.dev/">
+<meta property="og:title" content="Hangman Solver with Letter Probabilities">
+<meta property="og:description" content="Enter the letters you know and find the best next guess, powered by a 10,000+ word frequency-ranked dictionary.">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:url" content="https://hangman-solver.edgeone.dev/">
+<meta name="twitter:title" content="Hangman Solver with Letter Probabilities">
+<meta name="twitter:description" content="Enter the letters you know and see the best next guess, powered by a 10,000+ word frequency-ranked dictionary.">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22 transform=%22scale(-1,1) translate(-100,0)%22>🔍</text></svg>">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap');
+
+  :root{
+    --ink:#1c2230;
+    --ink-strong:#0d1119;
+    --ink-soft:#4a5468;
+    --glass:rgba(255,255,255,0.38);
+    --glass-strong:rgba(255,255,255,0.55);
+    --glass-line:rgba(255,255,255,0.65);
+    --glass-line-soft:rgba(255,255,255,0.35);
+    --field:rgba(255,255,255,0.30);
+    --accent:#5b6cf5;
+    --accent2:#3fa8f0;
+    --accent3:#22c1a0;
+    --red:#d9534f;
+    --shadow: 0 8px 32px rgba(31,38,82,0.14), 0 1.5px 0 rgba(255,255,255,0.5) inset;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0; min-height:100%;}
+  html{
+    background:
+      radial-gradient(circle at 12% 8%, #d3e3ff 0%, transparent 42%),
+      radial-gradient(circle at 88% 6%, #cdeeff 0%, transparent 45%),
+      radial-gradient(circle at 20% 92%, #d8f5e3 0%, transparent 40%),
+      radial-gradient(circle at 90% 85%, #dde2ff 0%, transparent 45%),
+      linear-gradient(160deg, #eef1fb 0%, #eef3fb 50%, #eaf6f3 100%);
+  }
+  body{
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding:32px 18px 60px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header{margin-bottom:2px;}
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:clamp(30px,6vw,44px);
+    margin:0 0 10px;
+    letter-spacing:-0.015em;
+    color:var(--ink);
+  }
+  .sub{color:var(--ink-soft); font-size:14.5px; line-height:1.65; max-width:58ch;}
+
+  .panel{
+    background:var(--glass);
+    border:1px solid var(--glass-line);
+    border-radius:22px;
+    padding:22px 22px 20px;
+    margin-bottom:18px;
+    position:relative;
+    backdrop-filter:blur(24px) saturate(180%);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    transform:translateZ(0);
+    -webkit-transform:translateZ(0);
+    will-change:transform;
+    isolation:isolate;
+  }
+  .panel::after{
+    content:"";
+    position:absolute; inset:0;
+    border-radius:22px;
+    background:linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 35%);
+    pointer-events:none;
+  }
+  .panel::before{
+    content:attr(data-tag);
+    position:relative;
+    display:inline-block;
+    margin-bottom:14px;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-line);
+    padding:4px 12px;
+    border-radius:999px;
+    font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
+  }
+  .panel.notag::before{
+    display:none;
+  }
+  label{
+    display:block; font-size:12px; letter-spacing:.03em;
+    color:var(--ink-soft); margin-bottom:8px; font-weight:600;
+  }
+  .hint{color:var(--ink-soft); font-size:12.5px; margin-top:8px; line-height:1.55;}
+  .edit-link{
+    display:inline-block; margin-top:12px;
+    font-size:12.5px; font-weight:700; letter-spacing:.02em;
+    color:var(--accent); cursor:pointer; user-select:none;
+  }
+  .edit-link:hover{text-decoration:underline;}
+  .hint em{color:var(--accent); font-style:normal; font-weight:600;}
+  textarea, input[type=text]{
+    width:100%;
+    background:var(--field);
+    border:1px solid var(--glass-line);
+    color:var(--ink);
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:17px;
+    padding:13px 16px;
+    border-radius:14px;
+    letter-spacing:.04em;
+    resize:vertical;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    transition:border-color .15s ease, box-shadow .15s ease;
+    transform:translateZ(0);
+    -webkit-transform:translateZ(0);
+  }
+  textarea:focus, input:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 4px rgba(124,92,255,0.15);
+  }
+  textarea::placeholder, input::placeholder{color:#8891a8; font-weight:500;}
+  #pattern{word-spacing:0.45em;}
+
+  .row{display:flex; gap:14px; flex-wrap:wrap;}
+  .row > div{flex:1; min-width:220px;}
+
+  details{margin-top:16px;}
+  summary{
+    cursor:pointer; color:var(--ink-soft); font-size:12.5px; letter-spacing:.02em;
+    font-weight:600; user-select:none;
+  }
+  summary:hover{color:var(--accent);}
+  details textarea{margin-top:10px; font-family:'Inter',sans-serif; font-size:14px;}
+
+  button{
+    background:linear-gradient(135deg, var(--accent), #a084ff);
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.5);
+    font-family:'Inter', sans-serif;
+    font-weight:700;
+    letter-spacing:.02em;
+    font-size:14.5px;
+    padding:14px 30px;
+    border-radius:999px;
+    cursor:pointer;
+    margin:18px 0;
+    box-shadow:0 8px 24px rgba(124,92,255,0.35), 0 1px 0 rgba(255,255,255,0.6) inset;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  button:hover{transform:translateY(-1px); box-shadow:0 10px 28px rgba(124,92,255,0.42), 0 1px 0 rgba(255,255,255,0.6) inset;}
+  button:active{transform:scale(.98) translateY(0);}
+
+  .tiles{display:flex; flex-wrap:wrap; gap:20px; margin:4px 0 2px;}
+  .word-tiles{display:flex; gap:5px;}
+  .tile{
+    width:34px; height:40px;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-line);
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:19px; font-weight:700; text-transform:uppercase;
+    font-family:'Fraunces', serif;
+    color:var(--ink);
+    box-shadow:0 2px 8px rgba(31,38,82,0.08), 0 1px 0 rgba(255,255,255,0.6) inset;
+  }
+  .tile.blank{color:transparent; background:var(--field); box-shadow:none; border-style:dashed;}
+
+  .tiles-edit{display:flex; flex-wrap:wrap; gap:14px 30px; margin:4px 0 2px;}
+  .word-tiles-edit{display:flex; flex-shrink:0; gap:5px; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px;}
+  input.tile-input{
+    flex:1 1 34px !important;
+    min-width:34px !important;
+    max-width:var(--tile-max, 70px);
+    height:40px;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-line);
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center;
+    padding:0;
+    font-size:19px; font-weight:700; text-transform:uppercase;
+    font-family:'Fraunces', serif;
+    color:var(--ink);
+    box-shadow:0 2px 8px rgba(31,38,82,0.08), 0 1px 0 rgba(255,255,255,0.6) inset;
+    caret-color:var(--accent);
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .tile-input:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(124,92,255,0.18);
+  }
+  .tile-input::placeholder{color:transparent;}
+
+  .results-head{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-bottom:16px; flex-wrap:wrap; gap:8px;
+    position:relative; z-index:1;
+  }
+  .results-head h2{
+    font-family:'Fraunces', serif; font-size:21px; margin:0; font-weight:600;
+    color:var(--ink-strong);
+  }
+  .count-pill{
+    font-size:11.5px; color:var(--accent); background:var(--glass-strong);
+    border:1px solid var(--glass-line); font-weight:700;
+    padding:5px 12px; border-radius:999px;
+  }
+
+  .letter-bars{display:flex; flex-direction:column; gap:9px;}
+
+  .expand-controls{display:flex; justify-content:center; gap:10px; margin-top:-14px; margin-bottom:-26px;}
+  .expand-btn{
+    width:44px; height:34px;
+    padding:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-line);
+    border-radius:12px;
+    color:var(--ink-soft);
+    font-size:14px;
+    cursor:pointer;
+    appearance:none;
+    -webkit-appearance:none;
+    outline:none;
+    -webkit-tap-highlight-color:transparent;
+    box-shadow:none;
+    transition:.12s;
+  }
+  .expand-btn:hover{color:var(--accent); border-color:var(--accent); transform:translateY(-1px);}
+  .expand-btn:active{transform:translateY(0);}
+  .lbar{display:grid; grid-template-columns:30px 1fr 52px; align-items:center; gap:12px;}
+  .lbar .ch{
+    font-weight:800; font-size:17px; text-align:center;
+    font-family:'Fraunces', serif;
+    width:30px; height:30px; line-height:30px;
+    background:var(--glass-strong); border:1px solid var(--glass-line);
+    border-radius:9px;
+  }
+  .lbar .track{
+    background:var(--field); border-radius:999px; height:14px; overflow:hidden;
+    border:1px solid var(--glass-line);
+  }
+  .lbar .fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius:999px;
+  }
+  .lbar .pct{font-size:12.5px; color:var(--ink-soft); text-align:right; font-weight:600;}
+  .lbar.top .ch{color:#fff; background:linear-gradient(135deg, var(--accent), var(--accent2)); border-color:transparent;}
+  .lbar.top .fill{background:linear-gradient(90deg, var(--accent2), var(--accent3));}
+
+  .seg{margin-top:18px; padding-top:16px; border-top:1px solid var(--glass-line-soft);}
+  .seg:first-child{margin-top:0; padding-top:0; border-top:none;}
+  .seg-title{font-size:12.5px; color:var(--ink-soft); margin-bottom:10px; font-weight:600;}
+  .cand-list{display:flex; flex-wrap:wrap; gap:7px;}
+  .cand{
+    background:var(--glass-strong); border:1px solid var(--glass-line);
+    padding:5px 12px; border-radius:999px; font-size:12.5px; color:var(--ink);
+    font-weight:500;
+  }
+  .more{color:var(--ink-soft); font-size:12.5px; align-self:center; font-weight:600;}
+  .empty-note{color:var(--red); font-size:12.5px; font-weight:500;}
+
+  footer{color:var(--ink-soft); font-size:12px; margin-top:28px; line-height:1.65;}
+  a{color:var(--accent); text-decoration:none; font-weight:600;}
+
+  .warn{
+    background:rgba(255,255,255,0.5); border:1px solid rgba(217,83,79,0.4); color:#a13a3a;
+    font-size:12.5px; padding:12px 16px; border-radius:14px; margin-bottom:14px;
+    backdrop-filter:blur(16px); font-weight:500;
+  }
+
+  .reset-row{
+    display:flex; justify-content:flex-end;
+    margin-bottom:0;
+  }
+  .ghost-btn{
+    background:var(--glass-strong);
+    border:1px solid var(--glass-line);
+    color:var(--ink-soft);
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    padding:8px 15px;
+    border-radius:999px;
+    cursor:pointer;
+    backdrop-filter:blur(16px);
+    transition:.15s;
+  }
+  .ghost-btn:hover{color:var(--accent); border-color:var(--accent);}
+
+  .theme-fab{
+    position:fixed;
+    right:16px;
+    bottom:16px;
+    z-index:100;
+    width:88px;
+    height:36px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    background:var(--glass);
+    border:1px solid var(--glass-line-soft);
+    color:var(--ink-soft);
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:11.5px;
+    padding:0;
+    border-radius:14px;
+    cursor:pointer;
+    backdrop-filter:blur(18px) saturate(160%);
+    -webkit-backdrop-filter:blur(18px) saturate(160%);
+    box-shadow:0 4px 16px rgba(31,38,82,0.10), 0 1px 0 rgba(255,255,255,0.4) inset;
+    opacity:0.75;
+    overflow:hidden;
+    white-space:nowrap;
+    transition:width .28s ease, opacity .2s ease, box-shadow .2s ease;
+  }
+  .theme-fab:hover{opacity:1; color:var(--accent); border-color:var(--accent);}
+  .theme-fab .theme-icon{font-size:14px; line-height:1; flex-shrink:0;}
+  .theme-fab .theme-label{
+    transition:max-width .22s ease, opacity .18s ease, margin-left .22s ease;
+    max-width:40px;
+    min-width:0;
+    opacity:1;
+  }
+  .theme-fab.collapsed{
+    width:36px;
+    gap:0;
+  }
+  .theme-fab.collapsed .theme-label{
+    max-width:0;
+    opacity:0;
+    margin-left:0;
+    overflow:hidden;
+  }
+
+  .keyboard-wrap{margin:0 auto;}
+  .keyboard{display:flex; flex-wrap:wrap; justify-content:center; column-gap:10px; margin-top:2px; margin-bottom:-6px;}
+  .key{
+    width:34px; height:38px;
+    margin-bottom:6px;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    line-height:1;
+    background:var(--field);
+    border:1px solid var(--glass-line);
+    border-radius:10px;
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:14px;
+    color:var(--ink);
+    cursor:pointer;
+    transition:.12s;
+    appearance:none;
+    -webkit-appearance:none;
+    -moz-appearance:none;
+    outline:none;
+    -webkit-tap-highlight-color:transparent;
+    box-shadow:none;
+  }
+  .key:focus{outline:none; box-shadow:none;}
+  .key:hover:not(.disabled){border-color:var(--accent); transform:translateY(-1px);}
+  .key.active{
+    background:#8b91a6;
+    color:#fff;
+    border-color:transparent;
+    position:relative;
+  }
+  .key.active::after{
+    content:"";
+    position:absolute;
+    left:15%;
+    right:15%;
+    top:50%;
+    height:2.5px;
+    background:#fff;
+    transform:translateY(-50%) rotate(-10deg);
+    border-radius:2px;
+  }
+  .key.disabled{opacity:.32; cursor:not-allowed;}
+
+  /* Dark mode */
+  html.dark{
+    --ink:#eef1fb;
+    --ink-strong:#ffffff;
+    --ink-soft:#a9b0c8;
+    --glass:rgba(255,255,255,0.07);
+    --glass-strong:rgba(255,255,255,0.12);
+    --glass-line:rgba(255,255,255,0.18);
+    --glass-line-soft:rgba(255,255,255,0.10);
+    --field:rgba(255,255,255,0.06);
+    --shadow: 0 8px 32px rgba(0,0,0,0.45), 0 1.5px 0 rgba(255,255,255,0.08) inset;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(91,108,245,0.28) 0%, transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(63,168,240,0.22) 0%, transparent 45%),
+      radial-gradient(circle at 20% 90%, rgba(34,193,160,0.18) 0%, transparent 40%),
+      linear-gradient(160deg, #0d0f1a 0%, #12111d 50%, #0b1613 100%);
+  }
+  html.dark textarea::placeholder, html.dark input::placeholder{color:#6b7186;}
+  html.dark .panel::after{background:linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 35%);}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Hangman Solver</h1>
+    <div class="sub">Works on single words and multi-word phrases. Enter what you know, and it will find the best letters to guess using a <span id="wordCountSub">10,000</span>-word English dictionary, sorted by real-world frequency.</div>
+  </header>
+
+  <div class="reset-row">
+    <button id="resetBtn" type="button" class="ghost-btn">Reset</button>
+  </div>
+
+  <div class="panel notag" data-tag="Puzzle">
+    <div class="results-head"><h2>Puzzle</h2></div>
+    <label for="pattern" id="puzzleLabel">Fill in the word or phrase as you know it. Use _ for unknown letters.</label>
+    <textarea id="pattern" rows="2" placeholder="e.g.  _e__o wor_d"></textarea>
+    <div class="tiles-edit" id="tilesEdit" style="display:none"></div>
+    <div class="edit-link" id="editLink" style="display:none">Edit format</div>
+  </div>
+
+  <div class="panel notag" data-tag="Guesses">
+    <div class="results-head"><h2>Guesses</h2></div>
+    <label>Tap a letter to mark it as a wrong guess. Letters already found will grey out automatically.</label>
+    <div class="keyboard-wrap" id="keyboardWrap">
+      <div class="keyboard" id="keyboard"></div>
+      <details id="customDetails">
+        <summary>Add custom words to the dictionary (names, slang, phrases)</summary>
+        <textarea id="custom" rows="3" placeholder="one word per line"></textarea>
+        <div class="hint">Useful if the puzzle uses a proper noun or word outside common English.</div>
+      </details>
+    </div>
+  </div>
+
+  <button id="solveBtn">Solve</button>
+
+  <div id="warn"></div>
+  <div id="output"></div>
+
+  <footer>
+    This solver checks your pattern against a <span id="wordCountFooter">10,000</span>-word English dictionary and suggests the letter most likely to appear next, leaning towards common, everyday words rather than obscure ones.
+  </footer>
+</div>
+
+<button id="themeToggle" type="button" class="theme-fab">
+  <span class="theme-icon">🌙</span>
+  <span class="theme-label">Dark</span>
+</button>
+
+<script>
+// Words are split into one array per frequency tier (tier 0 = extremely
+// common words like "the"/"and", the last tier = rare/specialized words).
+// To add a word, just find its rough frequency tier below and push it onto
+// the end of that tier's array -- no counting, no index math, no need to
+// touch any other tier. WORDS and WORD_TIER are built automatically from
+// these arrays further down.
+// Tier 0 (extremely common (the, of, and...)), weight 1.0
+const TIER_0_ULTRA_COMMON = ["the", "of", "and", "to", "a", "in", "for", "is", "on", "that", "by", "this", "with", "i", "you", "it", "not", "or", "be", "are", "from", "at", "as", "your", "all", "have", "new", "more", "an", "was", "we", "will", "home", "can", "us", "about", "if", "page", "my", "has", "search", "free", "but", "our", "one", "other", "do", "no", "information", "time"];
+
+// Tier 1 (very common), weight 0.9
+const TIER_1_VERY_COMMON = ["timed", "they", "site", "he", "up", "may", "what", "which", "their", "news", "out", "use", "any", "there", "see", "only", "so", "his", "when", "contact", "here", "business", "who", "web", "also", "now", "help", "get", "view", "online", "first", "am", "been", "would", "how", "were", "services", "some", "these", "click", "clicked", "its", "like", "liking", "service", "than", "find", "price", "date", "back", "top", "people", "had", "list", "name", "naming", "just", "over", "state", "year", "day", "into", "email", "two", "health", "world", "next", "used", "go", "work", "last", "lasted", "most", "products", "music", "buy", "data", "make", "them", "should", "product", "system", "post", "her", "city", "add", "policy", "number", "such", "please", "pleasing", "available", "copyright", "copyrighting", "support", "message", "messaged", "after", "best", "software", "then", "jan", "good", "video", "well", "where", "info", "rights", "public", "books", "high", "school", "through", "each", "links", "she", "review", "years", "order", "very", "privacy", "book", "booked", "items", "company", "read", "group", "sex", "need", "needing", "many", "user", "said", "does", "set", "under", "general", "research", "university", "january", "mail", "full", "map", "mapped", "reviews", "program", "life", "know", "games", "way", "me"];
+
+// Tier 2 (common), weight 0.8
+const TIER_2_COMMON = ["days", "management", "part", "could", "great", "united", "hotel", "real", "item", "international", "center", "centering", "ebay", "must", "store", "storing", "travel", "traveled", "comments", "made", "development", "report", "off", "member", "details", "line", "lining", "terms", "before", "hotels", "did", "send", "right", "type", "typed", "because", "local", "those", "using", "results", "office", "education", "national", "car", "design", "take", "youtube", "posted", "internet", "address", "community", "within", "states", "area", "want", "phone", "shipping", "reserved", "subject", "between", "forum", "family", "long", "based", "code", "coded", "show", "even", "evened", "black", "check", "special", "prices", "website", "index", "indexing", "being", "women", "much", "sign", "facebook", "file", "link", "open", "today", "technology", "south", "case", "project", "projecting", "same", "pages", "version", "section", "own", "owning", "found", "founding", "sports", "house", "housed", "related", "security", "both", "county", "american", "photo", "game", "gamed", "members", "power", "powering", "while", "care", "cared", "network", "networked", "down", "computer", "systems", "three", "total", "place", "end", "following", "download", "him", "without", "per", "access", "think", "north", "resources", "current", "posts", "big", "media", "law", "control", "water", "watering", "history", "pictures", "size", "sizing", "art", "personal", "since", "including", "guide", "guiding", "shop", "shopped", "directory", "board", "boarded", "location", "change", "white", "text", "small", "rating", "rate", "government", "children", "during", "usa", "return", "students", "shopping", "account", "accounted", "times", "sites", "level", "digital", "profile", "previous", "form", "events", "love", "old", "john", "main", "call", "hours", "image", "department", "title", "titling", "description", "non", "insurance", "another", "why", "shall", "property", "class", "still", "money", "quality", "every", "listing", "content", "country", "private", "little", "visit", "save", "tools", "low", "reply", "replying", "customer", "december", "compare", "movies", "include", "college", "value", "valuing", "article", "york", "man", "card", "jobs", "provide", "food", "source", "author", "different", "press", "learn", "sale", "around", "print", "course", "job", "canada", "process", "teen", "room", "stock", "training", "too", "credit", "point", "join", "science", "men", "categories", "advanced", "west", "sales", "look", "english", "left", "team", "estate", "hers", "box", "conditions", "select", "windows", "photos", "gay", "thread", "threading", "week", "category", "note", "noting", "live", "large", "gallery", "table", "register", "registering", "however", "june", "october", "november", "market", "marketed", "library", "really", "action", "start", "series", "model", "modeled", "features", "air", "pause", "industry", "plan", "human", "provided", "yes", "required", "second", "hot", "accessories", "cost", "movie", "forums", "march", "september", "better", "say", "questions", "july", "yahoo", "going", "medical", "test", "friend", "come", "dec", "server", "study", "application", "cart", "instagram", "staff", "staffed", "articles", "san", "feedback", "again", "play", "looking", "issues", "april", "never", "users", "complete", "street", "topic", "comment", "commenting", "financial", "things", "working", "against", "standard", "tax", "neat", "person", "below", "mobile", "less", "got", "blog", "blogged", "party", "payment", "equipment", "login", "student", "let", "programs", "offers", "legal", "above", "recent", "park", "parked", "stores", "side", "sided", "act", "acted", "problem", "theirs", "red", "give", "memory", "performance", "social", "august", "quote", "quoting", "language", "story", "sell", "options", "experience", "rates", "create", "key", "twitter", "body", "young", "america", "important", "field", "few", "east", "paper"];
+
+// Tier 3 (fairly common), weight 0.72
+const TIER_3_FAIRLY_COMMON = ["single", "age", "activities", "club", "example", "girls", "additional", "password", "latest", "something", "road", "gift", "question", "changes", "night", "hard", "texas", "oct", "pay", "four", "poker", "status", "browse", "browsed", "issue", "issuing", "range", "ranged", "building", "seller", "court", "february", "always", "result", "audio", "light", "write", "war", "nov", "offer", "blue", "groups", "easy", "given", "files", "event", "release", "releasing", "analysis", "request", "fax", "china", "making", "picture", "needs", "possible", "might", "professional", "yet", "month", "major", "star", "starred", "areas", "future", "space", "committee", "hand", "handing", "sun", "cards", "problems", "london", "washington", "meeting", "become", "interest", "id", "child", "keep", "enter", "california", "share", "similar", "garden", "gardened", "schools", "million", "added", "reference", "referencing", "companies", "listed", "baby", "learning", "energy", "run", "delivery", "net", "popular", "term", "film", "stories", "put", "computers", "journal", "reports", "try", "welcome", "central", "images", "president", "logout", "notice", "noticing", "god", "original", "jumped", "head", "radio", "until", "cell", "color", "coloring", "self", "council", "away", "includes", "track", "australia", "discussion", "archive", "archiving", "once", "others", "entertainment", "agreement", "format", "formatted", "least", "society", "months", "log", "safety", "netflix", "friends", "sure", "trade", "traded", "edition", "cars", "messages", "marketing", "tell", "further", "updated", "association", "able", "having", "provides", "david", "fun", "already", "green", "studies", "close", "common", "drive", "specific", "vegan", "several", "gold", "feb", "living", "sep", "collection", "called", "short", "arts", "lot", "ask", "display", "limited", "powered", "solutions", "means", "director", "daily", "beach", "past", "natural", "whether", "due", "electronics", "five", "upon", "period", "planning", "database", "says", "official", "weather", "mar", "land", "landed", "average", "done", "technical", "window", "france", "pro", "region", "island", "record", "direct", "directing", "microsoft", "conference", "conferenced", "environment", "records", "district", "calendar", "wealthy", "costs", "style", "front", "statement", "wore", "update", "parts", "aug", "ever", "downloads", "early", "miles", "sound", "resource", "present", "applications", "either", "ago", "document", "documenting", "word", "works", "material", "bill", "billed", "apr", "written", "talk", "federal", "hosting", "rules", "final", "adult", "tickets", "thing", "centre", "requirements", "via", "cheap", "kids", "finance", "financed", "true", "minutes", "else", "mark", "third", "rock", "gifts", "europe", "reading", "topics", "bad", "messy", "individual", "tips", "plus", "auto", "cover", "cousin", "usually", "edit", "together", "videos", "percent", "fast", "function", "functioned", "fact", "unit", "getting", "global", "tech", "meet", "far", "economic", "player", "projects", "lyrics", "often", "subscribe", "submit", "germany", "amount", "watch", "included", "feel", "though", "bank", "banked", "risk", "thanks", "everything", "deals", "various", "words", "linux", "jul", "production", "commercial", "james", "weight", "weighting", "town", "heart", "advertising", "received", "slavery", "choose", "treatment", "newsletter", "archives", "points", "knowledge", "listened", "magazine", "error", "camera", "jun", "girl", "currently", "construction", "toys", "registered", "clear", "golf", "receive", "domain", "methods", "chapter", "makes", "protection", "policies", "loan", "wide", "beauty", "manager", "india", "position", "positioned", "taken", "sort", "sorting", "listings", "models", "michael", "known", "half", "cases", "step", "engineering", "florida", "simple", "quick", "none", "wireless", "license", "paul", "friday", "lake", "gluten", "whole", "annual", "published", "later", "basic", "sony", "shows", "borrow", "corporate", "google", "church", "method", "purchase", "customers", "active", "response", "practice", "hardware", "figure", "figuring", "materials", "fire", "firing", "holiday", "chat", "enough", "designed", "along", "among", "death", "writing", "speed", "countries", "loss", "face", "brand", "discount", "discounting", "higher", "effects", "created", "remember", "remembering", "standards", "oil", "bit", "yellow", "political", "increase", "advertise", "advertised", "kingdom", "base", "basing", "near", "environmental", "burnout", "thought", "stuff", "stuffing", "french", "storage", "oh", "japan", "doing", "loans", "hears", "shoes", "entry", "stay", "nature", "orders", "availability", "africa", "summary", "turn", "mean", "growth", "notes", "agency", "king", "monday", "european", "activity", "copy", "although", "drug", "pics", "western", "income", "force", "forcing", "cash", "employment", "overall", "bay", "river", "commission", "package", "packaged", "contents", "seen", "players", "engine", "port", "album", "regional", "stop", "supplies", "started", "quarantine", "administration", "bar", "institute", "views", "plans", "double", "dog", "build", "screen", "screened", "exchange", "types", "soon", "sponsored", "lines", "electronic", "continue", "across", "benefits", "needed", "season", "apply", "someone", "held", "anything", "printer", "condition", "conditioned", "effective", "believe", "believing", "organization", "effect", "asked", "eur", "mind", "sunday", "selection", "casino", "lost", "tour", "toured", "menu", "volume", "cross", "crossed", "anyone", "mortgage", "hope", "silver", "corporation", "wish", "wished", "inside", "solution", "mature", "role", "rather", "weeks", "addition", "came", "supply", "supplying", "nothing", "certain", "executive", "whoever", "running", "lower", "necessary", "union", "jewelry", "according", "clothing", "mon", "com", "particular", "fine", "names", "robert", "homepage", "hour", "gas", "skills", "six", "bush", "islands", "advice", "career", "military", "rental", "decision", "drone", "leave", "british", "teens", "huge", "sat", "woman", "facilities", "zip", "bid", "kind", "sellers", "middle", "move", "cable", "opportunities", "taking", "values", "division", "coming", "tuesday", "object", "lesbian", "appropriate", "machine", "logo", "length", "actually", "nice", "score", "statistics", "client", "ok", "returns", "capital", "follow", "sample", "sampled", "investment", "sent", "shown", "saturday", "christmas", "england", "culture", "band", "flash", "flashed", "lead", "george", "choice", "went", "starting", "registration", "fri", "thursday", "courses", "consumer", "hi", "airport", "foreign", "artist", "outside", "furniture", "levels", "channel", "letter", "mode", "phones", "ideas", "wednesday", "structure", "structuring", "fund", "summer", "allow", "degree", "contract", "contracted", "button", "releases", "wed", "homes", "super", "male", "matter", "custom", "virginia", "almost", "took", "located", "multiple", "asian", "distribution", "editor", "inn", "industrial", "cause", "potential", "song", "ltd", "los", "focus", "late", "fall", "featured", "idea", "rooms", "female", "responsible", "inc", "communications", "win", "associated", "thomas", "primary", "cancer", "numbers", "reason", "reasoned", "tool", "browser", "mightnt", "spring", "foundation", "answer", "voice", "friendly", "schedule", "documents", "communication", "purpose", "feature", "bed", "bedded", "comes", "police", "everyone", "independent", "approach", "cameras", "brown", "physical", "operating", "hill", "maps", "medicine", "deal", "hold", "ratings", "chicago", "forms", "glass", "happy", "tue", "smith", "wanted", "developed", "thank", "safe", "unique", "survey", "prior", "telephone", "sport", "sported", "ready", "feed", "animal", "sources", "mexico", "population", "pa", "regular", "secure", "securing", "navigation", "operations", "therefore", "simply", "evidence", "station", "christian", "round", "paypal", "patience", "slower", "favorite", "understand", "option", "master", "valley", "recently", "probably", "thu", "rentals", "sea", "built", "publications", "blood", "cut", "worldwide", "improve", "connection", "publisher", "hall", "larger", "anti", "networks", "pandemic", "earth", "parents", "nokia", "impact", "transfer", "transferring", "introduction", "kitchen", "strong", "tel", "carolina", "wedding", "properties", "hospital", "ground", "overview", "ship", "accommodation", "owners", "disease", "excellent", "paid", "italy", "perfect", "hair", "opportunity", "kit", "classic", "basis", "im", "command", "commanding", "cities", "william", "express", "expressing", "award", "awarding", "distance", "tree", "peter", "assessment", "ensure", "ensured", "thus", "wall", "involved", "extra", "especially", "interface", "partners", "budget", "rated", "guides", "success", "maximum", "ma", "operation", "existing", "quite", "selected", "boy", "amazon", "patients", "restaurants", "beautiful", "warning", "wine", "locations", "horse", "vote", "forward", "forwarded", "flowers", "stars", "significant", "lists", "technologies", "owner", "retail", "animals", "useful", "directly", "manufacturer", "ways", "glue", "yourselves", "est", "son", "providing", "rule", "mac", "housing", "takes", "iii", "bring", "catalog", "searches", "max", "trying", "mother", "authority", "alright", "foci"];
+
+// Tier 4 (moderate frequency), weight 0.64
+const TIER_4_MODERATE = ["considered", "told", "traffic", "programme", "programmed", "joined", "input", "strategy", "feet", "agent", "valid", "bin", "modern", "senior", "ireland", "sexy", "teaching", "door", "grand", "testing", "trial", "charge", "units", "instead", "canadian", "cool", "cooled", "normal", "wrote", "enterprise", "ships", "entire", "educational", "leading", "metal", "positive", "fitness", "chinese", "opinion", "asia", "football", "abstract", "uses", "output", "funds", "greater", "ive", "likely", "develop", "employees", "artists", "alternative", "processing", "responsibility", "resolution", "java", "guest", "seems", "publication", "pass", "relations", "trust", "trusting", "van", "contains", "session", "multi", "photography", "republic", "fees", "components", "vacation", "century", "academic", "assistance", "completed", "skin", "graphics", "indian", "ads", "mary", "expected", "ring", "grade", "dating", "pacific", "mountain", "organizations", "pop", "weigh", "jumps", "filter", "filtered", "mailing", "vehicle", "longer", "consider", "int", "northern", "behind", "panel", "floor", "floored", "german", "buying", "match", "proposed", "default", "require", "iraq", "boys", "outdoor", "deep", "morning", "otherwise", "allows", "rest", "protein", "plant", "planting", "reported", "hit", "transportation", "pool", "mini", "politics", "partner", "disclaimer", "authors", "boards", "faculty", "parties", "fish", "fished", "membership", "mission", "eye", "string", "sense", "modified", "pack", "released", "stage", "internal", "goods", "recommended", "born", "unless", "richard", "detailed", "japanese", "race", "raced", "approved", "background", "target", "targeting", "except", "character", "maintenance", "ability", "maybe", "functions", "moving", "brands", "youre", "places", "pretty", "trademarks", "spain", "southern", "yourself", "etc", "winter", "battery", "youth", "pressure", "submitted", "boston", "debt", "keywords", "medium", "television", "interested", "core", "break", "purposes", "throughout", "sets", "dance", "danced", "wood", "itself", "defined", "papers", "playing", "awards", "fee", "studio", "kindness", "reader", "virtual", "device", "established", "answers", "rent", "las", "remote", "dark", "programming", "external", "apple", "regarding", "instructions", "min", "offered", "theory", "enjoy", "remove", "aid", "surface", "minimum", "visual", "host", "variety", "teachers", "martin", "manual", "block", "subjects", "swear", "agents", "increased", "repair", "repairing", "fair", "civil", "steel", "understanding", "songs", "fixed", "wrong", "beginning", "hands", "associates", "finally", "updates", "desktop", "classes", "paris", "ohio", "gets", "sector", "capacity", "requires", "jersey", "fat", "fully", "father", "electric", "saw", "instruments", "quotes", "officer", "driver", "businesses", "dead", "respect", "respecting", "unknown", "specified", "restaurant", "mike", "trip", "pst", "worth", "procedures", "poor", "teacher", "xxx", "eyes", "youve", "relationship", "workers", "farm", "farmed", "georgia", "peace", "traditional", "campus", "tom", "showing", "creative", "coast", "benefit", "progress", "funding", "devices", "lord", "grant", "granting", "sub", "agree", "fiction", "hear", "sometimes", "towel", "taller", "listens", "watches", "careers", "beyond", "goes", "families", "led", "museum", "themselves", "fan", "transport", "interesting", "blogs", "wife", "evaluation", "accepted", "former", "implementation", "ten", "hits", "zone", "zoned", "complex", "cat", "galleries", "references", "die", "presented", "melt", "melting", "jack", "flat", "flow", "agencies", "literature", "respective", "parent", "parented", "spanish", "michigan", "columbia", "setting", "scale", "stand", "economy", "highest", "helpful", "monthly", "critical", "frame", "musical", "definition", "secretary", "angeles", "networking", "path", "australian", "employee", "chief", "gives", "bottom", "magazines", "packages", "detail", "detailing", "francisco", "laws", "changed", "pet", "heard", "begin", "individuals", "colorado", "royal", "clean", "cleaned", "switch", "russian", "largest", "african", "guy", "titles", "relevant", "guidelines", "justice", "connect", "bible", "dev", "cup", "basket", "applied", "weekly", "vol", "youd", "installation", "described", "demand", "demanded", "suite", "suiting", "vegas", "square", "chris", "attention", "advance", "advancing", "skip", "diet", "army", "auction", "gear", "strongest", "lee", "difference", "allowed", "correct", "correcting", "charles", "nation", "selling", "lots", "piece", "sheet", "firm", "seven", "older", "illinois", "regulations", "elements", "species", "jump", "cells", "module", "resort", "blockchain", "facility", "random", "pricing", "dvds", "certificate", "minister", "motion", "looks", "fashion", "directions", "visitors", "documentation", "monitor", "trading", "forest", "calls", "whose", "coverage", "couple", "coupling", "giving", "chance", "vision", "ball", "ending", "clients", "actions", "listen", "discuss", "accept", "automotive", "naked", "goal", "successful", "sold", "wind", "communities", "clinical", "situation", "sciences", "markets", "lowest", "highly", "publishing", "appear", "emergency", "developing", "lives", "currency", "leather", "determine", "temperature", "palm", "announcements", "patient", "actual", "historical", "stone", "bob", "commerce", "ringtones", "perhaps", "persons", "difficult", "scientific", "satellite", "fit", "tests", "village", "accounts", "amateur", "met", "pain", "particularly", "factors", "coffee", "youll", "settings", "cum", "buyer", "cultural", "honesty", "frown", "steve", "easily", "crypto", "oral", "ford", "poster", "edge", "functional", "root", "closed", "holidays", "ice", "pink", "zealand", "balance", "balancing", "monitoring", "graduate", "graduating", "replies", "shot", "architecture", "initial", "label", "labeling", "melted", "invent", "inventing", "thinking", "scott", "sec", "recommend", "recommending", "canon", "hardcore", "league", "waste", "minute", "bus", "provider", "optional", "dictionary", "cold", "accounting", "manufacturing", "sections", "chair", "fishing", "effort", "phase", "fields", "bag", "fantasy", "letters", "motor", "professor", "context", "install", "shirt", "apparel", "generally", "continued", "foot", "mass", "crime", "count", "breast", "techniques", "ibm", "johnson", "quickly", "dollars", "websites", "religion", "claim", "claiming", "driving", "permission", "surgery", "patch", "heat", "wild", "measures", "generation", "kansas", "miss", "chemical", "doctor", "task", "reduce", "brought", "himself", "nor", "component", "enable", "exercise", "bug", "santa", "mid", "guarantee", "leader", "diamond", "israel", "processes", "soft", "servers", "alone", "meetings", "seconds", "bitcoin", "recycle", "recycled", "weaker", "jones", "arizona", "keyword", "interests", "hes", "flight", "congress", "fuel", "username", "walk", "produced", "italian", "paperback", "classifieds", "antarctic", "wait", "waited", "supported", "pocket", "saint", "rose", "freedom", "argument", "competition", "creating", "jim", "drugs", "joint", "premium", "providers", "fresh", "characters", "attorney", "upgrade", "upgraded", "factor", "growing", "thousands", "stream", "streamed", "apartments", "pick", "hearing", "eastern", "auctions", "therapy", "entries", "dates", "generated", "signed", "upper", "administrative", "serious", "prime", "samsung", "limit", "began", "louis", "steps", "errors", "shops", "del", "efforts", "informed", "thoughts", "creek", "worked", "quantity", "urban", "practices", "sorted", "reporting", "essential", "myself", "tours", "platform", "load", "affiliate", "affiliating", "labor", "immediately", "admin", "nursing", "defense", "machines", "designated", "tags", "heavy", "covered", "recovery", "joe", "guys", "integrated", "configuration", "merchant", "comprehensive", "expert", "universal", "protect", "drop", "dropping", "solid", "cds", "presentation", "languages", "became", "orange", "sweep", "sketch", "compliance", "vehicles", "prevent", "prevented", "theme", "rich", "campaign", "marine", "improvement", "guitar", "finding", "pennsylvania", "examples", "ipod", "shes", "saying", "spirit", "cracked", "squeeze", "squeezing", "invented", "claims", "challenge", "motorola", "acceptance", "strategies", "seem", "seeming", "affairs", "touch", "touching", "intended", "towards", "goals", "hire", "election", "suggest", "branch", "charges", "serve", "affiliates", "reasons", "magic", "mount", "smart", "talking", "gave", "ones", "latin", "multimedia", "tits", "avoid", "avoided", "certified", "manage", "corner", "rank", "computing", "oregon", "element", "birth", "virus", "abuse", "interactive", "requests", "separate", "separating", "quarter", "procedure", "leadership", "tables", "define", "racing", "religious", "facts", "breakfast", "kong", "column", "plants", "faith", "chain", "developer", "identify", "avenue", "missing", "died", "approximately", "domestic", "sitemap", "recommendations", "moved", "houston", "reach", "comparison", "mental", "viewed", "moment", "extended", "sequence", "inch", "attack", "attacking", "sorry", "centers", "opening", "damage", "damaging", "lab", "reserve", "reserving", "recipes", "cvs", "gamma", "plastic", "produce", "snow", "placed", "truth", "counter", "failure", "cardio", "follows", "weekend", "dollar", "camp", "camped", "ontario", "automatically", "des", "minnesota", "obey", "obeying", "escaped", "punish", "punishing", "films", "bridge", "native", "fill", "williams", "movement", "printing", "baseball", "owned", "theyre", "approval", "draft", "chart", "played", "contacts", "jesus", "readers", "clubs", "jackson", "equal", "adventure", "matching", "offering", "shirts", "profit", "leaders", "posters", "institutions", "assistant", "variable", "ave", "advertisement", "expect", "expecting", "parking", "headlines", "yesterday", "compared", "determined", "wholesale", "workshop", "russia", "gone", "codes", "kinds", "extension", "seattle", "statements", "golden", "completely", "teams", "fort", "lighting", "senate", "forces", "funny", "brother", "gene", "turned", "portable", "tried", "electrical", "applicable", "disc", "returned", "pattern", "boat", "boated", "named", "theatre", "laser", "earlier", "manufacturers", "sponsor", "sponsoring", "classical", "icon", "warranty", "dedicated", "indiana", "direction", "harry", "basketball", "objects", "ends", "delete", "deleting", "evening", "assembly", "nuclear", "melon", "earring", "whichever", "taxes", "mouse", "signal", "criminal", "issued", "brain", "sexual", "wisconsin", "powerful", "dream", "obtained", "false", "cast", "flower", "felt", "personnel", "passed", "supplied", "identified", "falls", "pic", "soul", "aids", "opinions", "promote", "stated", "stats", "hawaii", "professionals", "appears", "carry", "flag", "theyve", "decided", "covers", "advantage", "hello", "designs", "maintain", "tourism", "priority", "newsletters", "adults", "clips", "savings", "graphic", "atom", "payments", "estimated", "binding", "brief", "briefed", "ended", "winning", "eight", "anonymous", "iron", "ironed", "straight", "script", "scripted", "served", "wants", "miscellaneous", "prepared", "void", "dining", "alert", "integration", "atlanta", "dakota", "tag", "tagging", "interview", "mix", "framework", "disk", "installed", "queen", "credits", "clearly", "fix", "fixing", "handle", "sweet", "desk", "criteria", "dave", "massachusetts", "diego", "hong", "vice", "associate", "associating", "truck", "behavior", "enlarge", "ray", "frequently", "revenue", "measure", "changing", "votes", "duty", "looked", "discussions", "bear", "microscope", "gain", "gaining", "festival", "laboratory", "ocean", "flights", "experts", "signs", "lack", "depth", "govern", "boiled", "stretched", "planted", "iowa", "whatever", "logged", "laptop", "vintage", "train", "exactly", "dry", "drying", "explore", "maryland", "spa", "concept", "nearly", "eligible", "checkout", "reality", "forgot", "handling", "origin", "knew", "gaming", "feeds", "billion", "destination", "scotland", "faster", "intelligence", "dallas", "bought", "con", "ups", "nations", "route", "routed", "theyd", "followed", "specifications", "broken", "frank", "alaska", "zoom", "blow", "blew", "battle", "residential", "anime", "speak", "decisions", "industries", "protocol", "query", "clip", "partnership", "editorial", "expression", "equity", "provisions", "speech", "wire", "principles", "suggestions", "rural", "shared", "sounds", "replacement", "tape", "strategic", "judge", "spam", "economics", "acid", "bytes", "cent", "forced", "compatible", "fight", "apartment", "height", "null", "zero", "speaker", "filed", "netherlands", "obtain", "consulting", "recreation", "offices", "injustice", "designer", "remain", "managed", "failed", "marriage", "roll", "korea", "shortest", "wildfire", "banks", "participants", "secret", "bath", "kelly", "leads", "throne", "negative", "austin", "favorites", "toronto", "theater", "springs", "missouri", "andrew", "var", "perform", "healthy", "translation", "acquaintance", "estimates", "font", "assets", "injury", "joseph", "ministry", "drivers", "lawyer", "figures", "married", "protected", "proposal", "sharing", "philadelphia", "portal", "waiting", "birthday", "beta", "fail", "gratis", "banking", "officials", "brian", "artery", "toward", "won", "slightly", "assist", "assisting", "conduct", "contained", "lingerie", "legislation", "calling", "parameters", "theyll", "jazz", "serving", "bags", "profiles", "miami", "comics", "matters", "houses", "doc", "postal", "relationships", "tennessee", "babysitter", "wear", "controls", "breaking", "combined", "ultimate", "wales", "representative", "frequency", "introduced", "minor", "finish", "departments", "residents", "noted", "displayed", "mom", "reduced", "physics", "rare", "spent", "performed", "extreme", "samples", "bandage", "davis", "daniel", "bars", "reviewed", "row", "rowed", "forecast", "removed", "helps", "singles", "administrator", "cycle", "cycled", "amounts", "contain", "accuracy", "steer", "steered", "doubts", "trapped", "punished", "swore", "respectful", "squeezed", "repaired", "dough", "slowest", "dual", "rise", "sleep", "bird", "pharmacy", "brazil", "beige", "creation", "static", "scene", "hunter", "addresses", "lady", "crystal", "famous", "writer", "chairman", "violence", "fans", "oklahoma", "speakers", "drink", "academy", "dynamic", "gender", "eat", "permanent", "agriculture", "dell", "bending", "cleaning", "constitutes", "portfolio", "practical", "delivered", "collectibles", "infrastructure", "exclusive", "seat", "seated", "concerns", "colour", "vendor", "originally", "intel", "utilities", "philosophy", "regulation", "officers", "reduction", "aim", "aiming", "bids", "referred", "supports", "bends", "nutrition", "recording", "regions", "junior", "toll", "les", "cape", "ann", "weve", "rings", "meaning", "tip", "secondary", "wonderful", "mine", "mined", "ladies", "henry", "ticket", "announced", "guess", "agreed", "prevention", "whom", "ski", "skied", "breeze", "soccer", "math", "import", "importing", "posting", "presence", "instant", "mentioned", "automatic", "healthcare", "viewing", "maintained", "increasing", "majority", "connected", "christ", "dan", "dogs", "directors", "aspects", "chased", "rewarded", "austria", "ahead", "moon", "participation", "bruise", "scheme", "utility", "preview", "eraser", "vinegar", "fly", "manner", "matrix", "containing", "combination", "devel", "amendment", "despite", "strength", "guaranteed", "turkey", "libraries", "proper", "distributed", "degrees", "singapore", "enterprises", "bumpy", "delta", "fear", "seeking", "inches", "phoenix", "convention", "shares", "principal", "daughter", "standing", "comfort", "colors", "wars", "cisco", "ordering", "kept", "alpha", "appeal", "cruise", "bonus", "certification", "previously", "hey", "caregiver", "bookmark", "buildings", "specials", "beat", "disney", "household", "batteries", "adobe", "smoking", "bbc", "becomes", "drives", "arms", "alabama", "tea", "improved", "trees", "avg", "achieve", "positions", "dress", "subscription", "dealer", "careless", "contemporary", "sky", "utah", "nearby", "carried", "wheres", "happen", "exposure", "panasonic", "hide", "permalink", "signature", "gambling", "refer", "miller", "provision", "outdoors", "clothes", "caused", "luxury", "babes", "frames", "viagra", "certainly", "rescued", "forbid", "discovers", "catches", "indeed", "newspaper", "toy", "circuit", "layer", "printed", "slow", "removal", "easier", "liability", "trademark", "hip", "printers", "nine", "empathy", "adding", "kentucky", "mostly", "eric", "spot", "taylor", "trackback", "catching", "prints", "spend", "factory", "interior", "revised", "grow", "americans", "optical", "promotion", "relative", "amazing", "clock", "dot", "hiv", "identity", "suites", "conversion", "feeling", "hidden", "reasonable", "victoria", "serial", "relief", "checkup", "revision", "broadband", "influence", "influencing", "ratio", "importance", "rain", "onto", "planet", "webmaster", "copies", "recipe", "permit", "permitting", "seeing", "proof", "dna", "diff", "tennis", "bass", "prescription", "bedroom", "empty", "instance", "hole", "cherished", "pets", "ride", "licensed", "orlando", "specifically", "tim", "bureau", "maine", "represent", "conservation", "pair", "ideal", "specs", "recorded", "don", "pieces", "finished", "parks", "dinner", "lawyers", "sydney", "stress", "stressing", "chooses", "cream", "runs", "trends", "whos", "yeah", "commanded", "instruct", "instructing", "melts", "cracks", "shattered", "watered", "discover", "discovering", "patterns", "boxes", "louisiana", "hills", "javascript", "fourth", "advisor", "marketplace", "evil", "aware", "wilson", "shape", "shaping", "evolution", "irish", "certificates", "objectives", "stations", "suggested", "classmate", "remains", "acc", "landslide", "batter", "tallest", "greatest", "firms", "concerned", "euro", "operator", "structures", "generic", "encyclopedia", "usage", "cap", "ink", "charts", "continuing", "mixed", "census", "interracial", "peak", "competitive", "cowardly", "exist", "wheel", "transit", "suppliers", "salt", "compact", "poetry", "lights", "tracking", "angel", "bell", "keeping", "preparation", "attempt", "receiving", "matches", "accordance", "width", "noise", "engines", "mindfulness", "yep", "nope", "yup", "nah", "matrices", "cactus", "fungus", "cacti", "fungi"];
+
+// Tier 5 (less common), weight 0.56
+const TIER_5_LESS_COMMON = ["forget", "array", "discussed", "coworker", "accurate", "stephen", "elizabeth", "climate", "reservations", "pin", "playstation", "alcohol", "greek", "instruction", "managing", "annotation", "sister", "raw", "differences", "walking", "explain", "smaller", "newest", "establish", "gnu", "happened", "crimson", "expressed", "jeff", "extent", "sharp", "lesbians", "ben", "lane", "paragraph", "kill", "hunted", "sworn", "harvested", "mathematics", "aol", "compensation", "export", "managers", "aircraft", "modules", "sweden", "conflict", "conducted", "versions", "employer", "occur", "percentage", "cruel", "knows", "whens", "mississippi", "describe", "concern", "backup", "requested", "citizens", "connecticut", "heritage", "personals", "immediate", "holding", "trouble", "spread", "crayon", "coach", "coached", "kevin", "agricultural", "expand", "supporting", "audience", "assigned", "jordan", "crutch", "collections", "ages", "participate", "plug", "specialist", "cook", "affect", "virgin", "experienced", "investigation", "raised", "hat", "institution", "directed", "dealers", "searching", "sporting", "helping", "perl", "affected", "lib", "bike", "totally", "curved", "plate", "expenses", "indicate", "blonde", "proceedings", "favourite", "transmission", "anderson", "characteristics", "der", "lose", "organic", "seek", "experiences", "albums", "cheats", "extremely", "contracts", "guests", "hosted", "diseases", "concerning", "depressed", "developers", "equivalent", "chemistry", "tony", "neighborhood", "nevada", "kits", "thailand", "variables", "agenda", "anyway", "continues", "tracks", "betray", "obedient", "advisory", "cam", "curriculum", "logic", "template", "prince", "circle", "soil", "grants", "anywhere", "devastated", "psychology", "responses", "atlantic", "wet", "circumstances", "edward", "investor", "identification", "ram", "leaving", "wildlife", "appliances", "matt", "elementary", "cooking", "speaking", "sponsors", "fox", "unlimited", "respond", "sizes", "whys", "plain", "exit", "dew", "entered", "hanger", "shack", "iran", "arm", "arming", "keys", "launch", "launching", "wave", "checking", "costa", "belgium", "printable", "holy", "acts", "guidance", "mesh", "trail", "enforcement", "symbol", "crafts", "highway", "buddy", "digging", "hardcover", "observed", "dean", "setup", "poll", "booking", "glossary", "fiscal", "celebrity", "styles", "denver", "unix", "filled", "bond", "channels", "appendix", "notify", "notifying", "blues", "chocolate", "pub", "portion", "scope", "hampshire", "digs", "supplier", "cables", "cotton", "bluetooth", "controlled", "requirement", "authorities", "biology", "dental", "killed", "border", "ancient", "debate", "representatives", "starts", "pregnancy", "causes", "escapes", "protects", "defended", "guarded", "confessed", "denies", "governed", "suspects", "shatter", "shattering", "stretches", "twists", "arkansas", "biography", "leisure", "attractions", "learned", "transactions", "discouraged", "notebook", "explorer", "historic", "attached", "opened", "husband", "disabled", "authorized", "crazy", "upcoming", "britain", "concert", "retirement", "scores", "financing", "efficiency", "comedy", "adopted", "efficient", "weblog", "linear", "commitment", "specialty", "disgusted", "bears", "jean", "hop", "carrier", "edited", "constant", "visa", "mouth", "jewish", "meter", "linked", "portland", "interviews", "concepts", "gun", "reflect", "reflecting", "pure", "deliver", "hows", "wonder", "wondered", "hell", "lessons", "fruit", "drank", "begins", "qualified", "reform", "lens", "alerts", "treated", "discovery", "draw", "mysql", "classified", "relating", "assume", "confidence", "alliance", "confirm", "confirming", "warm", "warmed", "neither", "lewis", "howard", "offline", "leaves", "engineer", "engineered", "lifestyle", "dug", "consistent", "replace", "clearance", "connections", "inventory", "converter", "suck", "sucked", "organisation", "babe", "checks", "reached", "becoming", "safari", "objective", "indicated", "sugar", "crew", "legs", "sam", "stick", "securities", "obeyed", "fled", "doubted", "warns", "resisted", "instructed", "allen", "pdt", "dull", "relation", "enabled", "genre", "slide", "montana", "volunteer", "tested", "rear", "democratic", "enhance", "switzerland", "exact", "bound", "parameter", "adapter", "processor", "node", "formal", "dimensions", "contribute", "lock", "hockey", "storm", "eaten", "micro", "colleges", "laptops", "mile", "showed", "challenges", "editors", "mens", "threads", "bowl", "bowled", "supreme", "brothers", "recognition", "presents", "ref", "tank", "submission", "dolls", "estimate", "estimating", "encourage", "navy", "weakest", "eats", "buckle", "kid", "regulatory", "inspection", "consumers", "cancel", "canceling", "limits", "territory", "transaction", "manchester", "weapons", "paint", "delay", "delaying", "pilot", "outlet", "contributions", "continuous", "czech", "resulting", "cambridge", "initiative", "novel", "pan", "eighteen", "execution", "disability", "increases", "ultra", "winner", "idaho", "contractor", "episode", "examination", "potter", "dish", "plays", "bulletin", "indicates", "modify", "modifying", "oxford", "adam", "truly", "painting", "committed", "extensive", "affordable", "universe", "eighth", "candidate", "databases", "flee", "defends", "surrender", "surrendering", "traps", "admits", "swears", "majesty", "irresponsible", "boils", "explores", "explored", "compares", "autograph", "patent", "slot", "outstanding", "ha", "eating", "perspective", "planned", "watching", "lodge", "lodged", "messenger", "mirror", "tournament", "consideration", "discounts", "sterling", "sessions", "kernel", "stocks", "buyers", "journals", "eighty", "gray", "catalogue", "jennifer", "antonio", "charged", "broad", "taiwan", "chosen", "demo", "greece", "swiss", "sarah", "clark", "labour", "hate", "terminal", "publishers", "nights", "behalf", "caribbean", "liquid", "rice", "nebraska", "emotion", "loop", "salary", "reservation", "foods", "gourmet", "guard", "guarding", "properly", "orleans", "saving", "nfl", "pillowcase", "takeoff", "remaining", "empire", "resume", "twenty", "newly", "raise", "prepare", "avatar", "gary", "depending", "illegal", "energetic", "expansion", "vary", "hundreds", "rome", "arab", "lincoln", "helped", "premier", "tomorrow", "purchased", "milk", "decide", "deciding", "consent", "drama", "visiting", "performing", "downtown", "keyboard", "contest", "collected", "bands", "boot", "suitable", "enthusiastic", "absolutely", "millions", "lunch", "audit", "push", "chamber", "guinea", "findings", "muscle", "featuring", "implement", "clicking", "scheduled", "polls", "typical", "tower", "yours", "sum", "misc", "calculator", "significantly", "chicken", "envious", "temporary", "attend", "shower", "alan", "sending", "jason", "tonight", "dear", "sufficient", "shell", "province", "catholic", "oak", "vat", "awareness", "vancouver", "governor", "beer", "seemed", "contribution", "measurement", "swimming", "spyware", "fascinated", "formula", "constitution", "packaging", "solar", "jose", "catch", "jane", "pakistan", "reliable", "consultation", "northwest", "sir", "doubt", "doubting", "earn", "finder", "unable", "periods", "classroom", "tasks", "democracy", "attacks", "cuff", "kim", "fights", "abdomen", "aisle", "wallpaper", "merchandise", "resistance", "doors", "symptoms", "resorts", "biggest", "memorial", "visitor", "twin", "forth", "insert", "inserting", "baltimore", "gateway", "alumni", "drawing", "candidates", "charlotte", "ordered", "biological", "fighting", "transition", "happens", "flew", "preferences", "spy", "romance", "instrument", "bruce", "split", "themes", "powers", "agitated", "heaven", "obeys", "bits", "pregnant", "twice", "classification", "focused", "egypt", "physician", "hollywood", "bargain", "wikipedia", "cellular", "norway", "vermont", "flies", "asking", "blocks", "normally", "spiritual", "altar", "hunting", "diabetes", "suit", "shift", "chip", "res", "sit", "bodies", "photographs", "cutting", "wow", "simon", "writers", "ankle", "marks", "flexible", "loved", "favourites", "mapping", "numerous", "flown", "relatively", "birds", "satisfaction", "represents", "char", "indexed", "pittsburgh", "superior", "preferred", "saved", "paying", "cartoon", "shots", "intellectual", "moore", "granted", "choices", "carbon", "spending", "comfortable", "magnetic", "interaction", "listening", "foolish", "effectively", "registry", "crisis", "annoyed", "outlook", "massive", "denmark", "employed", "backgammon", "bright", "mop", "seldom", "treat", "header", "poverty", "formed", "piano", "echo", "que", "grid", "sheets", "patrick", "experimental", "puerto", "fourteen", "revolution", "consolidation", "displays", "plasma", "allowing", "earnings", "mystery", "landscape", "dependent", "mechanical", "journey", "vowed", "delaware", "aphid", "bidding", "consultants", "risks", "banner", "applicant", "charter", "fig", "barbara", "cooperation", "counties", "acquisition", "freezes", "ports", "implemented", "directories", "recognized", "dreams", "blogger", "notification", "licensing", "stands", "teach", "occurred", "backward", "textbooks", "rapid", "pull", "hairy", "diversity", "cleveland", "reverse", "deposit", "seminar", "apprehensive", "investments", "latina", "nasa", "froze", "wheels", "specify", "specifying", "accessibility", "dutch", "sensitive", "templates", "formats", "tab", "depends", "boots", "holds", "router", "concrete", "editing", "poland", "folder", "womens", "completion", "upload", "uploading", "pulse", "universities", "technique", "contractors", "habit", "voting", "courts", "notices", "subscriptions", "calculate", "calculating", "bicep", "detroit", "alexander", "broadcast", "converted", "metro", "toshiba", "anniversary", "improvements", "strip", "stripping", "specification", "blazer", "pearl", "accident", "nick", "accessible", "highlighter", "accessory", "resident", "handsome", "plot", "qty", "possibly", "airline", "typically", "representation", "regard", "pump", "exists", "arrangements", "smooth", "chases", "hunts", "vows", "obedience", "calculates", "conferences", "strike", "consumption", "birmingham", "binder", "flashing", "narrow", "afternoon", "threat", "surveys", "sitting", "putting", "consultant", "hangs", "controller", "ownership", "committees", "legislative", "researchers", "vietnam", "trailer", "anne", "castle", "gardens", "missed", "malaysia", "unsubscribe", "antique", "labels", "willing", "bio", "molecular", "acting", "bluejay", "heads", "stored", "exam", "logos", "hardworking", "birthstone", "residence", "attorneys", "milfs", "antiques", "density", "hundred", "ryan", "operators", "strange", "sustainable", "philippines", "statistical", "beds", "breasts", "mention", "mentioning", "innovation", "pcs", "employers", "grey", "parallel", "honda", "amended", "operate", "headache", "bills", "bold", "bathroom", "stable", "opera", "definitions", "doctors", "lesson", "blissful", "cinema", "asset", "scan", "elections", "drinking", "blowjobs", "reaction", "blank", "enhanced", "entitled", "severe", "generate", "stainless", "newspapers", "breaker", "heartbroken", "hospitals", "deluxe", "humor", "aged", "monitors", "exception", "lived", "duration", "bulk", "successfully", "indonesia", "pursuant", "sci", "fabric", "edt", "visits", "primarily", "blister", "tight", "domains", "capabilities", "contrast", "recommendation", "flying", "humble", "recruitment", "sin", "berlin", "cute", "organized", "para", "siemens", "adoption", "improving", "expensive", "pilates", "meant", "capture", "capturing", "pounds", "buffalo", "organisations", "plane", "explained", "seed", "programmes", "desire", "desiring", "expertise", "mechanism", "camping", "impatient", "jewellery", "meets", "welfare", "boardroom", "bridesmaid", "peer", "caught", "eventually", "marked", "driven", "measured", "medline", "bottle", "agreements", "considering", "innovative", "marshall", "massage", "rubber", "conclusion", "closing", "tampa", "thousand", "meat", "indigo", "legend", "grace", "susan", "ing", "adams", "python", "monster", "alex", "bang", "villa", "bone", "columns", "calf", "disorders", "bugs", "collaboration", "hamilton", "detection", "cookies", "inner", "formation", "tutorial", "med", "engineers", "intestine", "entity", "cruises", "gate", "holder", "proposals", "moderator", "tutorials", "camisole", "settlement", "portugal", "lawrence", "roman", "duties", "valuable", "tone", "collectables", "ethics", "scrub", "forever", "dragon", "busy", "cavity", "captain", "fantastic", "imagine", "lavender", "brings", "heating", "leg", "neck", "wing", "governments", "purchasing", "scripts", "abc", "stereo", "appointed", "taste", "dealing", "commit", "committing", "tiny", "operational", "rail", "airlines", "liberal", "jay", "trips", "gap", "sides", "lend", "tube", "turns", "corresponding", "descriptions", "cache", "caching", "centipede", "belt", "jacket", "determination", "animation", "oracle", "cardinal", "matthew", "lease", "leased", "productions", "aviation", "hobbies", "proud", "excess", "disaster", "console", "commands", "telecommunications", "instructor", "lends", "giant", "achieved", "injuries", "shipped", "seats", "approaches", "biz", "alarm", "voltage", "anthony", "nintendo", "usual", "loading", "stamps", "appeared", "checkered", "franklin", "angle", "rob", "vinyl", "highlights", "mining", "designers", "melbourne", "lent", "ongoing", "worst", "imaging", "betting", "scientists", "liberty", "wyoming", "blackjack", "argentina", "era", "convert", "converting", "possibility", "analyst", "commissioner", "dangerous", "catfish", "garage", "exciting", "reliability", "thongs", "gcc", "unfortunately", "respectively", "volunteers", "loses", "cockroach", "antiseptic", "attachment", "ringtone", "finland", "morgan", "derived", "pleasure", "honor", "oriented", "eagle", "desktops", "pants", "columbus", "nurse", "nursed", "prayer", "appointment", "workshops", "hurricane", "quiet", "luck", "postage", "producer", "represented", "mortgages", "magenta", "dial", "responsibilities", "cheese", "comic", "carefully", "jet", "productivity", "investors", "cocoon", "crown", "par", "underground", "diagnosis", "maker", "crack", "cracking", "principle", "picks", "vacations", "gang", "charades", "semester", "calculated", "applies", "casinos", "maroon", "appearance", "appetizer", "smoke", "smoked", "apache", "filters", "incorporated", "craft", "cake", "notebooks", "apart", "fellow", "blind", "lounge", "mad", "algorithm", "semi", "coins", "andy", "complain", "gross", "jinx", "strongly", "cafe", "valentine", "hilton", "ken", "mist", "proteins", "horror", "exp", "familiar", "capable", "douglas", "debian", "till", "involving", "pen", "threatens", "rescues", "captures", "rebels", "empress", "disapproval", "squeezes", "investing", "christopher", "admission", "epson", "shoe", "elected", "carrying", "victory", "sand", "madison", "terrorism", "joy", "chickadee", "editions", "nineteen", "mainly", "ethnic", "aspirin", "ran", "compliment", "parliament", "actor", "finds", "seal", "sealing", "situations", "fifth", "allocated", "citizen", "vertical", "courtroom", "corrections", "structural", "municipal", "describes", "prize", "occurs", "jon", "absolute", "disabilities", "ninety", "consists", "anytime", "substance", "prohibited", "addressed", "lies", "pipe", "soldiers", "guardian", "lecture", "simulation", "layout", "compost", "initiatives", "ill", "concentration", "classics", "lbs", "lay", "interpretation", "horses", "lol", "dirty", "deck", "ninth", "wayne", "donate", "donating", "taught", "circumstance", "bankruptcy", "asteroid", "worker", "optimization", "alive", "temple", "sphinx", "substances", "prove", "proving", "discovered", "wings", "breaks", "genetic", "restrictions", "participating", "waters", "promise", "thin", "exhibition", "criticize", "prefer", "preferring", "ridge", "cabinet", "noisy", "modem", "harris", "mph", "bringing", "sick", "dose", "evaluate", "tiffany", "tropical", "collect", "bet", "composition", "toyota", "streets", "nationwide", "vector", "definitely", "shaved", "turning", "buffer", "purple", "existence", "commentary", "nonetheless", "larry", "limousines", "developments", "def", "bandaid", "immigration", "cubicle", "destinations", "clockwise", "lets", "mutual", "pipeline", "necessarily", "syntax", "attribute", "prison", "skill", "chairs", "everyday", "apparently", "surrounding", "mountains", "moves", "popularity", "inquiry", "overwhelmed", "ethernet", "checked", "exhibit", "throw", "trend", "trended", "sierra", "visible", "cats", "desert", "oldest", "rhode", "nba", "busty", "coordinator", "obviously", "cufflink", "mercury", "steven", "handbook", "greg", "navigate", "worse", "summit", "victims", "panicked", "epa", "spaces", "fundamental", "burning", "escape", "quartz", "escaping", "coupons", "barcode", "somewhat", "receiver", "substantial", "progressive", "boats", "conduit", "glance", "scottish", "championship", "arcade", "richmond", "sacramento", "impossible", "ron", "russell", "tells", "obvious", "fiber", "passionate", "discourage", "discouraging", "depression", "graph", "covering", "platinum", "judgment", "bedrooms", "punishes", "disrespectful", "disobey", "polishes", "invents", "talks", "filing", "foster", "modeling", "passing", "awarded", "testimonials", "trials", "tissue", "memorabilia", "clinton", "masters", "bonds", "cartridge", "alberta", "explanation", "folk", "plateau", "org", "commons", "cincinnati", "subsection", "fraud", "electricity", "permitted", "braille", "spectrum", "dread", "arrival", "okay", "pottery", "emphasis", "roger", "aspect", "counterclockwise", "workplace", "awesome", "mexican", "confirmed", "counts", "priced", "wallpapers", "hist", "polite", "crash", "lift", "desired", "inter", "closer", "assumes", "heights", "shadow", "riding", "generosity", "mitt", "infection", "firefox", "lisa", "expense", "grove", "eligibility", "earlobe", "venture", "clinic", "korean", "phlegm", "healing", "princess", "mall", "puzzled", "entering", "packet", "spray", "studios", "involvement", "dad", "buttons", "placement", "breakdance", "observations", "funded", "thompson", "winners", "extend", "roads", "subsequent", "pat", "dublin", "rolling", "crewneck", "fell", "motorcycle", "yard", "disclosure", "establishment", "rang", "memories", "nelson", "arrived", "earwig", "creates", "resists", "faces", "tourist", "mayor", "murder", "sean", "adequate", "senator", "yield", "presentations", "grades", "cartoons", "pour", "digest", "reg", "lodging", "dust", "hence", "wiki", "relieved", "entirely", "replaced", "radar", "rescue", "rescuing", "undergraduate", "losses", "combat", "reducing", "stopped", "occupation", "breakthrough", "lakes", "butt", "ecstatic", "donations", "associations", "closely", "radiation", "diary", "seriously", "kings", "shooting", "kent", "adds", "diagonal", "ear", "rib", "flags", "baker", "launched", "elsewhere", "pollution", "conservative", "guestbook", "shock", "shocking", "effectiveness", "walls", "abroad", "ebony", "tie", "ward", "drawn", "arthur", "fjord", "ian", "visited", "roof", "walker", "elated", "demonstrate", "demonstrating", "atmosphere", "suggests", "ridden", "kiss", "kissed", "beast", "operated", "experiment", "targets", "overseas", "purchases", "dodge", "counsel", "counseled", "federation", "pizza", "buffet", "invited", "yards", "assignment", "chemicals", "gordon", "mod", "farmers", "queries", "bmw", "rush", "ukraine", "absence", "ringing", "nearest", "cluster", "downward", "vendors", "surrendered", "governs", "impolite", "whereas", "yoga", "elbow", "serves", "woods", "surprise", "lamp", "rico", "partial", "shoppers", "phil", "everybody", "couples", "nashville", "ranking", "jokes", "cst", "simpson", "sublime", "counseling", "risen", "palace", "acceptable", "satisfied", "glad", "wins", "measurements", "verify", "verifying", "globe", "trusted", "copper", "milwaukee", "rack", "capsule", "medication", "warehouse", "shareware", "eyebrow", "rep", "kerry", "receipt", "supposed", "ordinary", "nobody", "ghost", "violation", "rises", "configure", "stability", "mit", "applying", "southwest", "boss", "finch", "pride", "haiku", "institutional", "expectations", "independence", "knowing", "reporter", "metabolism", "keith", "champion", "cloudy", "linda", "ross", "personally", "chile", "anna", "plenty", "solo", "ritual", "adaptable", "eyelash", "sentence", "throat", "ignore", "ignoring", "maria", "uniform", "excellence", "wealth", "tall", "somewhere", "vacuum", "dancing", "attributes", "recognize", "recognizing", "choreography", "brass", "writes", "plaza", "outcomes", "ambitious", "survival", "quest", "publish", "sri", "screening", "toe", "rode", "punctual", "thumbnail", "trans", "jonathan", "whenever", "nova", "lifetime", "pioneer", "booty", "eyelid", "forgotten", "acrobat", "fuse", "plates", "acres", "amphibian", "venue", "athletic", "thermal", "essays", "behaviour", "vital", "telling", "fairly", "coastal", "charity", "rude", "intelligent", "edinburgh", "excel", "modes", "obligation", "campbell", "wake", "angrily", "stupid", "harbor", "hungary", "traveler", "segment", "realize", "realizing", "regardless", "enemy", "cloudburst", "puzzle", "puzzling", "rising", "fertilizer", "aluminum", "wells", "wishlist", "opens", "knapsack", "insight", "restricted", "rung", "republican", "secrets", "anklet", "lucky", "latter", "merchants", "thick", "trailers", "repeat", "repeating", "syndrome", "philips", "attendance", "penalty", "drum", "glasses", "girder", "enables", "iraqi", "builder", "vista", "jessica", "apron", "chips", "terry", "flood", "ease", "sadness", "arguments", "amsterdam", "arena", "flatter", "adventures", "pupils", "stewart", "announcement", "tabs", "outcome", "appreciate", "appreciating", "expanded", "casual", "grown", "polish", "polishing", "arrogant", "lovely", "coldsnap", "keychain", "extras", "centres", "jerry", "clause", "smile", "lands", "sang", "troops", "indoor", "bulgaria", "armed", "broker", "charger", "regularly", "believed", "pine", "cooling", "auditorium", "tend", "gulf", "flea", "rick", "trucks", "mechanisms", "divorce", "laura", "shopper", "groom", "tokyo", "partly", "nikon", "customize", "customizing", "tradition", "scar", "scarring", "candy", "pills", "tiger", "donald", "baggage", "folks", "sensor", "exposed", "telecom", "hunt", "angels", "deputy", "lynx", "indicators", "sealed", "thai", "emissions", "physicians", "loaded", "comeback", "fred", "complaint", "scenes", "forearm", "experiments", "balls", "bake", "baked", "afghanistan", "scarlet", "boost", "scholarship", "governance", "mill", "founded", "supplements", "chronic", "icons", "moral", "den", "catering", "aud", "finger", "keeps", "pound", "locate", "locating", "bathrobe", "camcorder", "trained", "burn", "burned", "implementing", "roses", "groomsman", "labs", "ourselves", "selfish", "bread", "tobacco", "wooden", "motors", "tough", "fracture", "roberts", "incident", "gonna", "dynamics", "lie", "conversation", "boarding", "decrease", "decreasing", "chest", "pension", "billy", "revenues", "emerging", "worship", "nft", "comet", "capability", "craig", "herself", "producing", "seventeen", "churches", "precision", "damages", "suspenders", "reserves", "contributed", "boil", "boiling", "solve", "shorts", "reproduction", "minority", "diverse", "amp", "ingredients", "ah", "johnny", "gemstone", "sole", "franchise", "recorder", "complaints", "facing", "nancy", "promotions", "tones", "seventy", "onyx", "passion", "bravely", "rehabilitation", "halibut", "maintaining", "sight", "laid", "clay", "defence", "patches", "weak", "refund", "towns", "environments", "divided", "blvd", "reception", "amd", "wise", "emails", "brooch", "cyprus", "constellation", "odds", "correctly", "insider", "seminars", "shallow", "glossy", "consequences", "makers", "hearts", "geography", "appearing", "integrity", "worry", "worrying", "discrimination", "eve", "carter", "legacy", "marc", "pleased", "cafeteria", "danger", "vitamin", "widely", "processed", "phrase", "genuine", "raising", "implications", "functionality", "paradise", "shocked", "hybrid", "reads", "roles", "intermediate", "emotional", "sons", "hanukkah", "harvests", "leaf", "calmly", "pad", "gum", "glory", "platforms", "bigger", "billing", "diesel", "versus", "combine", "overnight", "geographic", "exceed", "rod", "saudi", "cosmonaut", "fault", "cuba", "shy", "hrs", "preliminary", "districts", "camouflage", "introduce", "silk", "promotional", "kate", "chevrolet", "babies", "karen", "compiled", "romantic", "revealed", "specialists", "generator", "albert", "nymph", "examine", "hoe", "jimmy", "graham", "suspension", "cardigan", "bristol", "margaret", "compaq", "sings", "sad", "correction", "wolf", "slowly", "authentication", "communicate", "rugby", "supplement", "showtimes", "cal", "herring", "portions", "infant", "promoting", "sectors", "samuel", "carelessly", "fluid", "grounds", "fits", "kick", "regards", "meal", "hurt", "cosmos", "machinery", "sits", "bandwidth", "unlike", "equation", "insult", "baskets", "probability", "pot", "dimension", "wright", "barry", "carnivore", "proven", "schedules", "admissions", "cached", "warren", "slip", "studied", "reviewer", "involves", "quarterly", "rpm", "profits", "devil", "sixteen", "grass", "comply", "marie", "florist", "illustrated", "carpool", "cherry", "continental", "alternate", "achievement", "limitations", "kenya", "webcam", "irritated", "cuts", "funeral", "hummingbird", "earrings", "enjoyed", "automated", "chapters", "pee", "peed", "charlie", "quebec", "passenger", "convenient", "chimney", "sixty", "crutches", "dennis", "mars", "francis", "tvs", "sized", "manga", "noticed", "socket", "glyph", "silent", "literary", "egg", "mhz", "signals", "caps", "orientation", "pill", "theft", "chop", "childhood", "swing", "symbols", "kneecap", "lat", "meta", "comforter", "skull", "humans", "analog", "facial", "choosing", "talent", "dated", "flexibility", "seeker", "wisdom", "shoot", "boundary", "mint", "cleats", "packard", "offset", "payday", "philip", "elite", "inward", "spin", "holders", "believes", "swedish", "poems", "deadline", "slept", "jurisdiction", "cyclone", "robot", "displaying", "witness", "collins", "larva", "equipped", "clutch", "stages", "encouraged", "sur", "winds", "powder", "broadway", "acquired", "assess", "wash", "washed", "cartridges", "stones", "flees", "forbids", "battalion", "disobedient", "entrance", "gnome", "roots", "declaration", "losing", "spends", "attempts", "gadgets", "compassionate", "noble", "glasgow", "automation", "impacts", "rev", "gospel", "advantages", "shore", "loves", "induced", "knight", "preparing", "loose", "lawnmower", "aims", "recipient", "linking", "extensions", "counselor", "appeals", "earned", "jenga", "crypt", "illness", "islamic", "stealing", "athletics", "southeast", "ieee", "defender", "alternatives", "pending", "parker", "determining", "lebanon", "corp", "personalized", "kennedy", "conditioning", "teenage", "soap", "cufflinks", "triple", "cooper", "nyc", "vincent", "jam", "secured", "unusual", "answered", "partnerships", "steals", "livid", "adjective", "destruction", "slots", "increasingly", "migration", "disorder", "routine", "toolbar", "basically", "deadbolt", "rocks", "conventional", "titans", "applicants", "wearing", "axis", "sought", "genes", "mounted", "habitat", "firewall", "median", "guns", "scanner", "herein", "stole", "occupational", "jumper", "animated", "judicial", "dishonestly", "dehumidifier", "rio", "admire", "adjustment", "hero", "integer", "treatments", "locket", "bachelor", "attitude", "camcorders", "engaged", "falling", "basics", "montreal", "carpet", "lenses", "binary", "genetics", "attended", "dissertation", "difficulty", "punk", "stomachache", "collective", "coalition", "pi", "huh", "hmm", "aha", "crises", "diagnoses", "appendices", "axes", "larvae", "datum"];
+
+// Tier 6 (uncommon), weight 0.48
+const TIER_6_UNCOMMON = ["dropped", "enrollment", "duke", "walter", "pace", "besides", "wage", "adverb", "producers", "collector", "arc", "hosts", "zephyr", "interfaces", "advertisers", "diurnal", "moments", "louse", "atlas", "strings", "dawn", "representing", "observation", "feels", "sung", "torture", "carl", "deleted", "coat", "mitchell", "doggy", "mrs", "kimono", "restoration", "convenience", "returning", "ralph", "domesticated", "opposition", "container", "defendant", "warner", "confirmation", "affidavit", "app", "embedded", "inkjet", "supervisor", "wizard", "corps", "actors", "liver", "swam", "peripherals", "liable", "brochure", "maggot", "morris", "bestsellers", "doorknob", "petition", "eminem", "recall", "antenna", "picked", "assumed", "departure", "minneapolis", "belief", "killing", "bikini", "memphis", "shoulder", "decor", "anesthesia", "lookup", "texts", "harvard", "swims", "doormat", "brokers", "roy", "rebelled", "betrays", "confesses", "instructs", "dutiful", "shatters", "ion", "diameter", "ottawa", "doll", "podcast", "downgrade", "tit", "seasons", "peru", "lumber", "interactions", "refine", "refining", "matte", "bidder", "singer", "evans", "herald", "literacy", "fails", "dormitory", "aging", "nike", "intervention", "pissing", "dizzy", "fed", "swinging", "plugin", "attraction", "annuity", "diving", "invite", "inviting", "modification", "alice", "latinas", "suppose", "supposing", "customized", "reed", "involve", "moderate", "terror", "drywall", "younger", "thirty", "mice", "opposite", "understood", "rapidly", "ban", "banning", "migraine", "temp", "intro", "mercedes", "swings", "assurance", "clerk", "happening", "vast", "mills", "outline", "outlining", "antibiotic", "amendments", "duct", "downpour", "holland", "receives", "jeans", "metropolitan", "compilation", "verification", "mackerel", "fonts", "odd", "wrap", "refers", "mood", "favor", "veterans", "quiz", "sigma", "attractive", "swum", "occasion", "recordings", "earbud", "jefferson", "victim", "demands", "millipede", "sleeping", "careful", "ext", "beam", "gardening", "obligations", "apostrophe", "arrive", "arriving", "orchestra", "sunset", "tracked", "moreover", "minimal", "polyphonic", "lottery", "ecosystem", "tops", "framed", "aside", "swung", "outsourcing", "licence", "adjustable", "allocation", "michelle", "essay", "discipline", "amy", "demonstrated", "entree", "dialogue", "jukebox", "identifying", "alphabetical", "camps", "declared", "dispatched", "mite", "empathetic", "aaron", "applique", "handheld", "monopoly", "trace", "disposal", "shut", "florists", "packs", "installing", "teal", "switches", "romania", "voluntary", "ncaa", "thou", "consult", "consulted", "phd", "greatly", "blogging", "extinction", "mask", "cycling", "midnight", "commonly", "photographer", "inform", "informing", "turkish", "coal", "cry", "messaging", "pentium", "quantum", "barley", "murray", "intent", "teammate", "mock", "zoo", "largely", "pleasant", "announce", "announcing", "fry", "constructed", "additions", "requiring", "spoke", "aka", "arrow", "gauze", "engagement", "sampling", "rough", "weird", "tee", "refinance", "lion", "inspired", "holes", "weddings", "mortar", "blade", "gallon", "suddenly", "oxygen", "tenth", "cookie", "meals", "benign", "canyon", "meters", "merely", "calendars", "arrangement", "conclusions", "molar", "passes", "bibliography", "pointer", "compatibility", "stretch", "stretching", "durham", "furthermore", "permits", "garnish", "cooperative", "muslim", "neil", "sleeve", "zigzag", "netscape", "cleaner", "thankful", "cricket", "beef", "feeding", "stroke", "township", "rankings", "measuring", "cad", "biopsy", "hats", "robin", "robinson", "goalpost", "goalie", "jacksonville", "strap", "headquarters", "sharon", "crowd", "transfers", "mosquito", "surf", "surfed", "olympic", "transformation", "remained", "attachments", "dir", "thirteen", "entities", "customs", "outward", "administrators", "personality", "rainbow", "hook", "grate", "roulette", "decline", "declining", "gloves", "israeli", "medicare", "cord", "skiing", "blockbuster", "cloud", "facilitate", "subscriber", "valve", "val", "hewlett", "explains", "proceed", "proceeded", "feelings", "knife", "threw", "gratitude", "jamaica", "priorities", "shelf", "mulch", "bookstore", "timing", "liked", "parenting", "adopt", "adopting", "denied", "incredible", "britney", "freeware", "gratuity", "donation", "outer", "crop", "deaths", "rivers", "cameo", "commonwealth", "gutter", "pharmaceutical", "manhattan", "tales", "katrina", "toothache", "workforce", "islam", "nodes", "thumbs", "seeds", "cited", "perpendicular", "lite", "ghz", "hub", "khaki", "targeted", "organizational", "skype", "nostril", "realized", "handkerchief", "twelve", "founder", "decade", "dispute", "portuguese", "tired", "adverse", "everywhere", "excerpt", "eng", "carbohydrate", "trillion", "steam", "discharge", "drinks", "ace", "voices", "acute", "halloween", "climbing", "happily", "stood", "sing", "tons", "perfume", "carol", "honest", "heatwave", "albany", "hazardous", "restore", "restoring", "stack", "methodology", "somebody", "overtime", "sue", "housewares", "reputation", "turquoise", "resistant", "democrats", "recycling", "headband", "hang", "chemotherapy", "curve", "curving", "creator", "amber", "qualifications", "museums", "plaster", "coding", "slideshow", "tracker", "variation", "passage", "transferred", "trunk", "hiking", "damn", "pierre", "headset", "headphone", "photograph", "oakland", "colombia", "tutor", "tutored", "waves", "camel", "distributor", "lamps", "underlying", "paisley", "hood", "wrestling", "suicide", "archived", "chromosome", "chi", "arabia", "gathering", "projection", "juice", "hostess", "chase", "chasing", "herbivore", "mathematical", "logical", "sauce", "fame", "gnaw", "extract", "specialized", "diagnostic", "unfriendly", "panama", "indianapolis", "payable", "corporations", "courtesy", "criticism", "automobile", "confidential", "statutory", "accommodations", "hinge", "athens", "northeast", "downloaded", "plywood", "judges", "cinematographer", "retired", "paperclip", "isp", "remarks", "detected", "decades", "paintings", "walked", "arising", "nissan", "vein", "bracelet", "ins", "eggs", "juvenile", "injection", "homerun", "yorkshire", "populations", "protective", "afraid", "acoustic", "railway", "cassette", "initially", "indicator", "pointed", "causing", "humidifier", "mistake", "norton", "locked", "clang", "eliminate", "fusion", "mineral", "honestly", "sunglasses", "violet", "pastel", "ruby", "steering", "beads", "fortune", "preference", "canvas", "threshold", "parish", "claimed", "screens", "cemetery", "planner", "croatia", "flows", "stadium", "venezuela", "poncho", "exploration", "hoodie", "mins", "fewer", "sequences", "coupon", "nurses", "stem", "clatter", "proxy", "astronomy", "lanka", "opt", "edwards", "drew", "contests", "flu", "pesticide", "translate", "translating", "announces", "costume", "psalm", "huddle", "tagged", "berkeley", "voted", "killer", "bikes", "gates", "ibuprofen", "adjusted", "rap", "tune", "tuned", "bishop", "pulled", "corn", "shaped", "compression", "seasonal", "establishing", "farmer", "clink", "counters", "humility", "puts", "constitutional", "grew", "perfectly", "tin", "slave", "instantly", "cultures", "norfolk", "coaching", "plaid", "examined", "trek", "encoding", "rebar", "litigation", "submissions", "heroes", "painted", "ingredient", "broadcasting", "horizontal", "artwork", "cosmetic", "resulted", "portrait", "terrorist", "informational", "ethical", "carriers", "collateral", "mobility", "floral", "builders", "ties", "struggle", "schemes", "suffering", "impairment", "neutral", "insecure", "fisher", "rat", "spears", "prospective", "dildos", "bedding", "ultimately", "pruner", "joining", "heading", "equally", "artificial", "bearing", "spectacular", "coordination", "connector", "brad", "combo", "invertebrate", "seniors", "worlds", "comma", "guilty", "affiliated", "activation", "regretful", "naturally", "haven", "tablet", "jury", "dos", "romper", "tail", "subscribers", "charm", "charmed", "mnemonic", "lawn", "violent", "mitsubishi", "underwear", "jumpsuit", "basin", "soup", "potentially", "pupa", "ranch", "constraints", "crossing", "inclusive", "dimensional", "cottage", "drunk", "considerable", "inhaler", "crimes", "cone", "resolved", "mozilla", "byte", "toner", "nose", "keyhole", "latex", "branches", "anymore", "delhi", "holdings", "alien", "locator", "selecting", "processors", "pantyhose", "broke", "nepal", "zimbabwe", "difficulties", "juan", "complexity", "msg", "rake", "constantly", "kindergarten", "browsing", "resolve", "resolving", "barcelona", "presidential", "coop", "documentary", "cod", "territories", "scaffold", "melissa", "moscow", "thesis", "thru", "jews", "nylon", "palestinian", "discs", "rocky", "bargains", "frequent", "knead", "trim", "nigeria", "ceiling", "pixels", "ensuring", "interpreter", "hispanic", "legislature", "hospitality", "gen", "anybody", "procurement", "diamonds", "rash", "espn", "fleet", "copay", "untitled", "bunch", "totals", "leggings", "marriott", "singing", "theoretical", "afford", "exercises", "starring", "referral", "nhl", "surveillance", "optimal", "quit", "vortex", "distinct", "protocols", "lung", "highlight", "highlighting", "substitute", "inclusion", "hopefully", "loafers", "brilliant", "turner", "sucking", "scrabble", "cents", "reuters", "gel", "corral", "todd", "spoken", "omega", "reassure", "evaluated", "stayed", "civic", "assignments", "manuals", "doug", "sees", "ironing", "termination", "locker", "watched", "saver", "thereof", "grill", "households", "redeem", "rogers", "grain", "aaa", "authentic", "regime", "wanna", "wishes", "bull", "montgomery", "architectural", "louisville", "crackle", "depend", "depended", "loudly", "differ", "macintosh", "movements", "ranging", "monica", "resignation", "repairs", "breath", "breathed", "amenities", "virtually", "cole", "mart", "candle", "hanging", "colored", "authorization", "tale", "verified", "sewer", "loyalty", "lynn", "formerly", "projector", "situated", "comparative", "std", "seeks", "herbal", "loving", "creditor", "strictly", "routing", "judo", "docs", "stanley", "psychological", "surprised", "retailer", "vitamins", "elegant", "malware", "gains", "restless", "renewal", "genealogy", "opposed", "deemed", "vixen", "surrenders", "scoring", "expenditure", "panties", "brooklyn", "liverpool", "sisters", "critics", "connectivity", "spots", "algorithms", "hacker", "madrid", "mammal", "similarly", "margin", "crochet", "coin", "solely", "fake", "faked", "salon", "collaborative", "norman", "fda", "excluding", "turbo", "headed", "voters", "cure", "shuffle", "madonna", "serene", "commander", "arch", "murphy", "mantel", "thinks", "thats", "suggestion", "hdtv", "soldier", "karate", "phillips", "aimed", "justin", "bomb", "harm", "interval", "mirrors", "debtor", "spotlight", "tricks", "reset", "brush", "investigate", "investigating", "marinate", "thy", "panels", "repeated", "assault", "connecting", "spare", "logistics", "deer", "kodak", "tongue", "bowling", "danish", "severance", "pal", "monkey", "proportion", "filename", "skirt", "florence", "melancholy", "invest", "invested", "honey", "um", "analyses", "deductible", "drawings", "significance", "scenario", "ye", "lovers", "atomic", "sideways", "approx", "symposium", "arabic", "gauge", "essentials", "junction", "kungfu", "protecting", "midterm", "pygmy", "faced", "mat", "rachel", "solving", "transmitted", "weekends", "screenshots", "produces", "shovel", "oven", "ted", "intensive", "chains", "kingston", "sixth", "engage", "despise", "deviant", "noon", "switching", "mince", "quoted", "adapters", "correspondence", "farms", "imports", "supervision", "cheat", "bronze", "expenditures", "sandy", "separation", "testimony", "suspect", "suspecting", "celebrities", "macro", "sender", "mandatory", "moccasins", "boundaries", "crucial", "syndication", "gym", "sprain", "celebration", "adjacent", "filtering", "dictatorship", "tuition", "solitaire", "spouse", "exotic", "viewer", "leftovers", "signup", "threats", "luxembourg", "puzzles", "reaching", "damaged", "cams", "modesty", "receptor", "laugh", "laughed", "joel", "surgical", "destroy", "destroying", "citation", "pitch", "autos", "yo", "premises", "perry", "proved", "offensive", "imperial", "dozen", "benjamin", "deployment", "diplomat", "spreadsheet", "nervously", "teeth", "cloth", "clothed", "studying", "colleagues", "stamp", "lotus", "salmon", "olympus", "separated", "cargo", "tan", "directive", "salem", "mate", "gypsy", "mated", "starter", "upgrades", "likes", "butter", "nightgown", "pepper", "weapon", "luggage", "burden", "tanktop", "chef", "loophole", "tapes", "zones", "races", "isle", "distrust", "stylish", "slim", "maple", "luke", "grocery", "sprinkler", "offshore", "governing", "retailers", "depot", "nocturnal", "kenneth", "comp", "alt", "pie", "blend", "harrison", "julie", "occasionally", "cbs", "attending", "emission", "pete", "spec", "finest", "realty", "janet", "bow", "nostalgic", "penn", "recruiting", "dye", "apparent", "instructional", "autumn", "traveling", "probe", "midi", "permissions", "biotechnology", "accelerator", "stapler", "toilet", "ranked", "jackets", "routes", "packed", "excited", "lotion", "outreach", "helen", "odometer", "toast", "mounting", "recover", "recovering", "tied", "lopez", "balanced", "prescribed", "catherine", "timely", "talked", "debug", "delayed", "chuck", "embroidery", "reproduced", "hon", "dale", "explicit", "calculation", "offside", "villas", "ebook", "consolidated", "exclude", "peeing", "occasions", "striped", "brooks", "equations", "oryx", "newton", "oils", "sept", "exceptional", "anxiety", "bingo", "altitude", "whilst", "spatial", "respondents", "unto", "omnivore", "ceramic", "prompt", "precious", "minds", "emoji", "annually", "considerations", "scanners", "pays", "cox", "fingers", "lunar", "sunny", "ebooks", "delivers", "queensland", "trait", "necklace", "musicians", "leeds", "optimistic", "composite", "unavailable", "tailbone", "cedar", "arranged", "lang", "theaters", "advocacy", "raleigh", "stud", "fold", "folded", "essentially", "designing", "threaded", "qualify", "fingering", "exponent", "blair", "hopes", "assessments", "ounce", "amid", "mason", "diagram", "burns", "pumps", "footwear", "vic", "beijing", "peoples", "victor", "mario", "pos", "attach", "attaching", "licenses", "utils", "removing", "advised", "tease", "brunswick", "overalls", "spider", "phys", "ranges", "pairs", "sensitivity", "meteor", "trails", "preservation", "flock", "hudson", "isolated", "calgary", "interim", "trench", "assisted", "divine", "streaming", "approve", "approving", "chose", "compound", "intensity", "padlock", "technological", "sylph", "syndicate", "abortion", "dialog", "archaeology", "venues", "blast", "wellness", "calcium", "newport", "antivirus", "addressing", "pole", "termite", "discounted", "indians", "shield", "harvest", "harvesting", "membrane", "follower", "pedestrian", "prague", "previews", "bangladesh", "constitute", "locally", "concluded", "pickup", "desperate", "mothers", "nascar", "iceland", "demonstration", "governmental", "manufactured", "candles", "graduation", "meteorite", "mega", "bend", "bended", "peel", "sailing", "variations", "moms", "sacred", "addiction", "morocco", "chrome", "tommy", "tuna", "archipelago", "thigh", "springfield", "foreclosure", "refused", "brake", "exterior", "greeting", "ecology", "oliver", "congo", "glen", "pessimistic", "botswana", "nav", "delays", "synthesis", "olive", "undefined", "unemployment", "cyber", "verizon", "scored", "enhancement", "newcastle", "clone", "velocity", "lambda", "relay", "composed", "tears", "pint", "performances", "oasis", "friction", "baseline", "cab", "threaten", "angry", "societies", "silicon", "brazilian", "identical", "petroleum", "midfielder", "compete", "competed", "norwegian", "armoire", "quixotic", "lover", "belong", "honolulu", "beatles", "lips", "playoff", "escort", "retention", "exchanges", "pond", "rolls", "tunic", "thomson", "barnes", "soundtrack", "wondering", "malta", "daddy", "ferry", "hashtag", "rabbit", "profession", "seating", "dam", "cnn", "separately", "politely", "physiology", "thrilled", "lil", "collecting", "das", "exports", "omaha", "tire", "tiring", "participant", "scholarships", "recreational", "dominican", "chad", "electron", "loads", "friendship", "heather", "axle", "passport", "motel", "predator", "unions", "treasury", "warrant", "frozen", "milestone", "hayloft", "occupied", "josh", "royalty", "scales", "rally", "observer", "sunshine", "strain", "drag", "ceremony", "tiara", "somehow", "arrested", "expanding", "preheat", "provincial", "upward", "investigations", "ripe", "yamaha", "rely", "relied", "medications", "hebrew", "gained", "rochester", "dying", "laundry", "stuck", "solomon", "placing", "stops", "hem", "homework", "adjust", "adjusting", "assessed", "preschool", "advertiser", "enabling", "barometer", "encryption", "filling", "downloadable", "sophisticated", "quaff", "imposed", "silence", "scsi", "focuses", "tick", "soviet", "possession", "laboratories", "treaty", "vocal", "monsoon", "trainer", "organ", "prey", "stronger", "volumes", "advances", "vegetables", "lemon", "toxic", "thumbnails", "herd", "darkness", "pty", "nuts", "nail", "vienna", "implied", "span", "stanford", "veil", "stockings", "joke", "respondent", "quart", "packing", "statute", "rejected", "satisfy", "satisfying", "destroyed", "shelter", "bookcase", "tranquil", "chapel", "manufacture", "layers", "wordpress", "guided", "vulnerability", "accountability", "celebrate", "accredited", "appliance", "compressed", "hexagon", "quietly", "bahamas", "powell", "mixture", "zoophilia", "bench", "univ", "tub", "rider", "scheduling", "radius", "nebula", "perspectives", "mortality", "logging", "hampton", "christians", "borders", "therapeutic", "pads", "racket", "butts", "inns", "bobby", "tricep", "impressive", "sheep", "accordingly", "architect", "railroad", "lectures", "honk", "challenging", "botany", "wines", "viewpoint", "nursery", "harder", "cups", "ash", "microwave", "cheapest", "radiator", "accidents", "squelch", "relocation", "stuart", "contributors", "salvador", "ali", "salad", "monroe", "tender", "violations", "foam", "temperatures", "paste", "clouds", "competitions", "discretion", "tanzania", "trowel", "preserve", "referee", "poem", "unsigned", "hum", "staying", "cosmetics", "nightlight", "easter", "theories", "repository", "praise", "jeremy", "venice", "concentrations", "vibrators", "estonia", "christianity", "bouillon", "veteran", "streams", "landing", "reptile", "signing", "executed", "katie", "negotiations", "realistic", "showcase", "integral", "asks", "vneck", "relax", "relaxing", "namibia", "generating", "christina", "hyphen", "congressional", "uneasy", "synopsis", "hardly", "prairie", "reunion", "composer", "resentment", "bean", "sword", "absent", "photographic", "sells", "ecuador", "hoping", "accessed", "spirits", "modifications", "coral", "pixel", "float", "floated", "colin", "bias", "ointment", "imported", "paths", "resilient", "bubble", "acquire", "acquiring", "boxspring", "contrary", "millennium", "tribune", "immunity", "vessel", "acids", "focusing", "viruses", "warn", "cheaper", "admitted", "dairy", "admit", "embezzle", "admitting", "mem", "fancy", "equality", "samoa", "achieving", "rickshaw", "tap", "stickers", "fisheries", "exceptions", "reactions", "vow", "vowing", "leasing", "lauren", "beliefs", "companion", "squad", "analyze", "analyzing", "ashley", "scroll", "relate", "inflammation", "divisions", "swim", "wages", "rinse", "additionally", "suffer", "forests", "fellowship", "invalid", "concerts", "braise", "wheelbarrow", "martial", "males", "victorian", "retain", "retaining", "outbreak", "colours", "execute", "executing", "tunnel", "genres", "cambodia", "patents", "copyrights", "chaos", "roast", "lithuania", "mastercard", "wheat", "chronicles", "obtaining", "beaver", "updating", "influencer", "distribute", "distributing", "readings", "decorative", "confused", "compiler", "enlargement", "eagles", "bases", "vii", "accused", "bee", "rudely", "campaigns", "whiteboard", "wren", "unity", "loud", "conjunction", "bride", "rats", "defines", "airports", "instances", "broth", "indigenous", "begun", "brunette", "packets", "anchor", "socks", "validation", "parade", "interjection", "sadly", "corruption", "stat", "trigger", "incentives", "jaywalk", "permafrost", "cholesterol", "gathered", "essex", "slovenia", "notified", "differential", "beaches", "folders", "dramatic", "surfaces", "terrible", "routers", "cruz", "pendant", "sanctuary", "dresses", "baptist", "scientist", "hiring", "clocks", "arthritis", "females", "wallace", "nevertheless", "jingle", "reflects", "taxation", "fever", "cuisine", "bunk", "surely", "practitioners", "transcript", "myspace", "sarcastic", "theorem", "inflation", "thee", "ruth", "pray", "stylus", "compounds", "pope", "drums", "contracting", "topless", "arnold", "structured", "reasonably", "jeep", "pharmacist", "chicks", "bare", "hung", "saute", "cattle", "mba", "lipid", "radical", "graduates", "rover", "recommends", "controlling", "treasure", "reload", "distributors", "flame", "tanks", "assuming", "monetary", "elderly", "pit", "arlington", "casserole", "scoreboard", "mono", "particles", "floating", "extraordinary", "tile", "indicating", "bolivia", "spell", "spelled", "hottest", "stevens", "coordinate", "coordinating", "kuwait", "livestream", "exclusively", "emily", "alleged", "limitation", "widescreen", "compile", "compiling", "scrimmage", "squirting", "hijack", "webster", "struck", "illustration", "plymouth", "warnings", "construct", "constructing", "apps", "inquiries", "prosthetic", "bridal", "annex", "mag", "inspiration", "tribal", "curious", "affecting", "freight", "seemingly", "rebate", "meetup", "eclipse", "sudan", "chisel", "downloading", "malignant", "rec", "shuttle", "aggregate", "stunning", "cycles", "affects", "forecasts", "detect", "detecting", "actively", "ciao", "knee", "prep", "complicated", "sentimental", "chem", "fastest", "butler", "injured", "decorating", "payroll", "cookbook", "expressions", "ton", "courier", "uploaded", "shakespeare", "hints", "collapse", "manuscript", "americas", "connectors", "twinks", "shingles", "unlikely", "gif", "pros", "conflicts", "quarterback", "solver", "techno", "beverage", "tribute", "chord", "wired", "elvis", "immune", "latvia", "travelers", "forestry", "barriers", "cant", "rarely", "infected", "shred", "offerings", "martha", "genesis", "barrier", "argue", "arguing", "incorrect", "trains", "marionette", "metals", "bicycle", "furnishings", "letting", "arise", "arose", "guatemala", "celtic", "thereby", "irc", "jigsaw", "jamie", "siding", "particle", "perception", "minerals", "advise", "advising", "humidity", "bottles", "boxing", "bangkok", "renaissance", "pathology", "sara", "bra", "coastline", "ordinance", "hughes", "photographers", "salsa", "infections", "jeffrey", "meme", "chess", "simmer", "operates", "brisbane", "configured", "survive", "oscar", "festivals", "menus", "joan", "possibilities", "duck", "reveal", "revealing", "canal", "amino", "phi", "contributing", "herbs", "clinics", "slice", "mls", "cow", "manitoba", "analytical", "missions", "watson", "lying", "costumes", "strict", "dive", "dived", "molecule", "saddam", "circulation", "drill", "drilled", "offense", "bryan", "protest", "condensation", "assumption", "jerusalem", "smartphone", "hobby", "tries", "invention", "nickname", "fiji", "technician", "inline", "executives", "enquiries", "setback", "washing", "audi", "staffing", "cognitive", "exploring", "trick", "enquiry", "closure", "raid", "smoothly", "timber", "volt", "monarchy", "intense", "div", "playlist", "registrar", "showers", "supporters", "ruling", "steady", "dirt", "statutes", "withdrawal", "myers", "drops", "predicted", "wider", "speedometer", "saskatchewan", "cancellation", "cupboard", "plugins", "enrolled", "sensors", "screw", "ministers", "publicly", "hourly", "blame", "geneva", "veterinary", "mri", "acer", "reseller", "dist", "handed", "suffered", "intake", "stilettos", "informal", "relevance", "incentive", "shortcut", "butterfly", "tucson", "mechanics", "heavily", "fifty", "headers", "mistakes", "numerical", "ons", "geek", "uncle", "defining", "counting", "reflection", "stir", "sink", "accompanied", "assure", "assuring", "invitation", "devoted", "mute", "princeton", "dashboard", "jacob", "sodium", "spirituality", "hormone", "meanwhile", "proprietary", "timothy", "childrens", "brick", "grip", "naval", "medieval", "stubborn", "porcelain", "bridges", "captured", "watt", "decent", "casting", "dayton", "translated", "shortly", "cameron", "columnists", "pins", "carlos", "reno", "negligence", "sling", "donna", "andreas", "warrior", "sympathetic", "diploma", "cabin", "innocent", "scanning", "consensus", "polo", "valium", "copying", "delivering", "cordless", "dunno", "patricia", "horn", "eddie", "uganda", "fired", "journalism", "prot", "trivia", "tablespoon", "adidas", "perth", "frog", "grammar", "intention", "syria", "disagree", "neutron", "klein", "harvey", "tires", "logs", "undertaken", "hazard", "retro", "leo", "statewide", "semiconductor", "teaspoon", "gregory", "episodes", "boolean", "circular", "anger", "mainland", "illustrations", "suits", "chances", "spacecraft", "interact", "snap", "happiness", "arg", "substantially", "equator", "bizarre", "glenn", "auckland", "noun", "olympics", "territorial", "fruits", "identifier", "geo", "ribbon", "calculations", "doe", "jpeg", "conducting", "startup", "suzuki", "trinidad", "kissing", "wal", "handy", "swap", "exempt", "crops", "thermostat", "reduces", "accomplished", "calculators", "geometry", "impression", "abs", "slovakia", "flip", "guild", "correlation", "nucleus", "gorgeous", "capitol", "sim", "dishes", "rna", "barbados", "chrysler", "nervous", "timeout", "evaporation", "refuse", "refusing", "extends", "fragrance", "spacesuit", "mcdonald", "replica", "plumbing", "brussels", "tribe", "neighbors", "trades", "superb", "buzz", "transparent", "nuke", "rid", "trinity", "charleston", "tollbooth", "handled", "legends", "boom", "oats", "calm", "champions", "floors", "selections", "projectors", "inappropriate", "exhaust", "comparing", "shanghai", "speaks", "burton", "vocational", "davidson", "copied", "scotia", "touchdown", "farming", "gibson", "pharmacies", "fork", "fender", "troy", "roller", "introducing", "batch", "organize", "appreciated", "alter", "altering", "nicole", "octagon", "latino", "ghana", "splint", "edges", "mixing", "handles", "trimester", "skilled", "fitted", "albuquerque", "harmony", "distinguished", "asthma", "projected", "assumptions", "shareholders", "twins", "developmental", "rip", "regulated", "triangle", "amend", "amending", "anticipated", "oriental", "reward", "rewarding", "trolley", "windsor", "zambia", "completing", "hydrogen", "sprint", "organism", "comparable", "chick", "advocate", "footboard", "sims", "confusion", "copyrighted", "tray", "inputs", "warranties", "genome", "escorts", "documented", "thong", "turtleneck", "medal", "paperbacks", "coaches", "vessels", "harbour", "walks", "sucks", "sol", "striker", "keyboards", "sage", "knives", "eco", "vulnerable", "arrange", "arranging", "pasture", "artistic", "bat", "honors", "tutoring", "booth", "indie", "reflected", "unified", "bones", "breed", "bred", "detector", "ignored", "polar", "fallen", "precise", "sussex", "respiratory", "futon", "notifications", "mainstream", "invoice", "evaluating", "lip", "umpire", "subcommittee", "sap", "gather", "suse", "maternity", "backed", "alfred", "patchwork", "colonial", "carey", "motels", "forming", "embassy", "cave", "journalists", "danny", "slight", "proceeds", "valedictorian", "indirect", "amongst", "wool", "supernova", "foundations", "arrest", "arresting", "volleyball", "horizon", "deeply", "toolbox", "marina", "liabilities", "prizes", "bosnia", "browsers", "decreased", "patio", "tolerance", "gimme", "pathogen", "surfing", "vent", "creativity", "lloyd", "describing", "optics", "pursue", "lightning", "overcome", "eyed", "quotations", "grab", "inspector", "attract", "brighton", "beans", "bookmarks", "ellis", "disable", "disabling", "veranda", "snake", "succeed", "leonard", "lending", "oops", "reminder", "searched", "behavioral", "riverside", "bathrooms", "pentagon", "plains", "raymond", "insights", "abilities", "syrup", "initiated", "sullivan", "midwest", "karaoke", "vertebrate", "trap", "trapping", "lonely", "fool", "glaze", "nonprofit", "lancaster", "suspended", "hereby", "observe", "observing", "julia", "containers", "attitudes", "karl", "berry", "collar", "simultaneously", "racial", "integrate", "voyage", "bermuda", "amanda", "perimeter", "sociology", "mobiles", "screenshot", "exhibitions", "confident", "retrieved", "exhibits", "officially", "consortium", "dies", "terrace", "bacteria", "pts", "replied", "seafood", "novels", "windshield", "recipients", "playboy", "ought", "delicious", "traditions", "jail", "safely", "gust", "finite", "taekwondo", "kidney", "periodically", "fixes", "sends", "photosynthesis", "durable", "mazda", "allied", "throws", "moisture", "worksheet", "hungarian", "roster", "referring", "spencer", "wichita", "nasdaq", "uruguay", "transform", "timer", "tablets", "tuning", "gotten", "educators", "tyler", "futures", "vegetable", "verse", "highs", "wristwatch", "humanities", "independently", "wanting", "custody", "scratch", "pity", "launches", "alignment", "henderson", "britannica", "comm", "ellen", "headboard", "competitors", "nhs", "rocket", "aye", "bullet", "towers", "racks", "lace", "nasty", "takeout", "visibility", "latitude", "consciousness", "ste", "tumor", "ugly", "deposits", "beverly", "mistress", "encounter", "encountering", "trustees", "watts", "plow", "duncan", "reprints", "hart", "bernard", "resolutions", "accessing", "forty", "tubes", "attempted", "col", "midlands", "priest", "floyd", "ronald", "analysts", "queue", "trance", "locale", "headlight", "nicholas", "biol", "bundle", "hammer", "invasion", "witnesses", "runner", "rows", "administered", "notion", "predicate", "skins", "mailed", "fujitsu", "spelling", "arctic", "exams", "tango", "rewards", "beneath", "strengthen", "strengthened", "defend", "defending", "frederick", "medicaid", "infrared", "seventh", "gods", "welsh", "belly", "aggressive", "tex", "advertisements", "quarters", "stolen", "cia", "soonest", "haiti", "disturbed", "determines", "preposition", "sculpture", "poly", "hemisphere", "ears", "dod", "fist", "naturals", "neo", "motivation", "lenders", "pharmacology", "fitting", "fixtures", "bloggers", "mere", "agrees", "passengers", "quantities", "petersburg", "consistently", "powerpoint", "cons", "surplus", "elder", "sonic", "obituaries", "cheers", "trophy", "dig", "taxi", "prequel", "punishment", "appreciation", "subsequently", "belarus", "nat", "zoning", "gravity", "providence", "thumb", "restriction", "incorporate", "incorporating", "backgrounds", "treasurer", "hiphop", "guitars", "essence", "flooring", "lightweight", "ethiopia", "mighty", "athletes", "humanity", "transcription", "holmes", "complications", "scholars", "dpi", "scripting", "prognosis", "gis", "remembered", "galaxy", "chester", "snapshot", "caring", "worn", "synthetic", "shaw", "segments", "testament", "ugh", "ouch", "phew", "whoa", "yikes", "duh", "meh", "lice", "nuclei", "theses", "cherub", "cherubim"];
+
+// Tier 7 (rare / specialized), weight 0.4
+const TIER_7_RARE = ["expo", "dominant", "twist", "twisting", "specifics", "itunes", "stomach", "partially", "typhoon", "buried", "newbie", "minimize", "darwin", "ranks", "wilderness", "debut", "hutch", "generations", "tournaments", "bradley", "pronoun", "deny", "denying", "anatomy", "bali", "judy", "sponsorship", "headphones", "fraction", "trio", "proceeding", "cube", "defects", "volkswagen", "uncertainty", "breakdown", "milton", "marker", "reconstruction", "subsidiary", "strengths", "clarity", "rugs", "sandra", "adelaide", "encouraging", "furnished", "monaco", "settled", "proton", "folding", "emirates", "terrorists", "airfare", "comparisons", "beneficial", "distributions", "vaccine", "belize", "ignition", "waltz", "crap", "fate", "promised", "volvo", "penny", "robust", "bookings", "threatened", "minolta", "republicans", "discusses", "porter", "jungle", "responded", "rim", "abstracts", "zen", "ivory", "alpine", "punctuation", "dis", "prediction", "pharmaceuticals", "fabulous", "remix", "alias", "thesaurus", "individually", "battlefield", "literally", "newer", "kay", "ecological", "spice", "oval", "implies", "soma", "cooler", "appraisal", "consisting", "lemme", "maritime", "periodic", "submitting", "overhead", "ascii", "prospect", "shipment", "breeding", "puppet", "whirlwind", "citations", "geographical", "donor", "mozambique", "tension", "benz", "trash", "shapes", "wifi", "tier", "fwd", "earl", "manor", "envelope", "diane", "homeland", "disclaimers", "championships", "excluded", "andrea", "breeds", "rapids", "disco", "sheffield", "bailey", "aus", "finishing", "pyramid", "emotions", "wellington", "incoming", "prospects", "linguistics", "cleaners", "bulgarian", "hwy", "eternal", "cashiers", "guam", "cite", "citing", "aboriginal", "remarkable", "rotation", "nam", "preventing", "productive", "boulevard", "eugene", "gdp", "workaround", "pig", "metric", "compliant", "minus", "penalties", "bennett", "imagination", "refurbished", "quotation", "joshua", "armenia", "varied", "closest", "activated", "actress", "mess", "conferencing", "assign", "assigning", "armstrong", "politicians", "lit", "accommodate", "tigers", "aurora", "loveseat", "una", "slides", "milan", "premiere", "lender", "villages", "shade", "chorus", "christine", "rhythm", "digit", "argued", "rectangle", "dietary", "symphony", "clarke", "sudden", "accepting", "precipitation", "marilyn", "lions", "ada", "pools", "lyric", "claire", "isolation", "speeds", "sustained", "matched", "approximate", "rope", "carroll", "rational", "programmer", "fighters", "chambers", "dump", "greetings", "inherited", "hangman", "marinade", "warming", "referendum", "incomplete", "vocals", "chronicle", "fountain", "chubby", "grave", "legitimate", "biographies", "burner", "yrs", "foo", "investigator", "plaintiff", "finnish", "gentle", "prisoners", "deeper", "muslims", "hose", "mediterranean", "nightlife", "footage", "worthy", "reveals", "architects", "saints", "entrepreneur", "rustle", "carries", "sig", "freelance", "duo", "excessive", "devon", "screensaver", "helena", "saves", "regarded", "valuation", "muffler", "unexpected", "cigarette", "fog", "characteristic", "marion", "lobby", "egyptian", "tunisia", "metallica", "outlined", "consequently", "headline", "treating", "punch", "appointments", "str", "gotta", "sanctions", "cowboy", "narrative", "bahrain", "enormous", "karma", "consist", "consisted", "betty", "queens", "academics", "pubs", "quantitative", "lucas", "screensavers", "subdivision", "tribes", "vip", "defeat", "clicks", "distinction", "honduras", "naughty", "hazards", "nightstand", "insured", "harper", "livestock", "exemption", "tenant", "scissors", "sustainability", "cabinets", "tattoo", "shake", "algebra", "shadows", "holly", "formatting", "silly", "nutritional", "yea", "mercy", "hartford", "freely", "marcus", "sunrise", "wrapping", "mild", "fur", "nicaragua", "weblogs", "timeline", "tar", "belongs", "readily", "affiliation", "soc", "fence", "fenced", "screech", "nudist", "infinite", "diana", "ensures", "relatives", "lindsay", "clan", "oceania", "legally", "shame", "satisfactory", "revolutionary", "bracelets", "sync", "civilian", "telephony", "mesa", "fatal", "remedy", "realtors", "breathing", "briefly", "thickness", "adjustments", "graphical", "genius", "discussing", "aerospace", "fighter", "screenplay", "meaningful", "flesh", "retreat", "adapted", "barely", "wherever", "estates", "rug", "democrat", "borough", "maintains", "failing", "shortcuts", "retained", "pamela", "andrews", "marble", "extending", "overcast", "jesse", "specifies", "hull", "surrey", "briefing", "dem", "accreditation", "blackberry", "highland", "seam", "meditation", "modular", "microphone", "macedonia", "combining", "brandon", "instrumental", "giants", "organizing", "shed", "balloon", "moderators", "winston", "memo", "ham", "solved", "tide", "kazakhstan", "hawaiian", "standings", "partition", "invisible", "consoles", "funk", "fbi", "qatar", "magnet", "translations", "sedative", "porsche", "cayman", "pliers", "jaguar", "reel", "sheer", "commodity", "posing", "wang", "kilometers", "bind", "thanksgiving", "rand", "hopkins", "urgent", "guarantees", "infants", "gothic", "cylinder", "witch", "buck", "indication", "eh", "congratulations", "tba", "cohen", "puppy", "kathy", "selfie", "acre", "graphs", "surround", "cigarettes", "revenge", "expires", "enemies", "lows", "controllers", "aqua", "chen", "emma", "consultancy", "finances", "poach", "accepts", "enjoying", "conventions", "eva", "patrol", "smell", "pest", "coordinates", "rca", "carnival", "roughly", "sticker", "promises", "responding", "sequel", "reef", "physically", "divide", "dividing", "stakeholders", "consecutive", "cornell", "satin", "bon", "deserve", "attempting", "promo", "representations", "chan", "worried", "tunes", "garbage", "competing", "combines", "mas", "beth", "bradford", "len", "phrases", "peninsula", "chelsea", "puree", "boring", "reynolds", "silo", "dom", "jill", "accurately", "speeches", "reaches", "schema", "considers", "sofa", "catalogs", "ministries", "vacancies", "quizzes", "parliamentary", "obj", "prefix", "lucia", "savannah", "barrel", "typing", "nerve", "dans", "planets", "deficit", "boulder", "pointing", "renew", "coupled", "viii", "sitcom", "myanmar", "metadata", "harold", "circuits", "floppy", "texture", "handbags", "jar", "somerset", "rocker", "incurred", "acknowledge", "acknowledging", "thoroughly", "antigua", "nottingham", "thunder", "tent", "caution", "identifies", "questionnaire", "qualification", "locks", "modelling", "namely", "miniature", "hack", "dare", "euros", "interstate", "sizzle", "pirates", "aerial", "hawk", "consequence", "rebel", "rebelling", "systematic", "perceived", "origins", "hired", "makeup", "textile", "lamb", "madagascar", "nathan", "tobago", "presenting", "cos", "troubleshooting", "uzbekistan", "indexes", "ruler", "pac", "centuries", "magnitude", "richardson", "hindu", "fragrances", "vocabulary", "splash", "licking", "earthquake", "fundraising", "fcc", "markers", "weights", "albania", "geological", "assessing", "lasting", "wicked", "eds", "introduces", "kills", "roommate", "webcams", "pushed", "webmasters", "computational", "participated", "junk", "handhelds", "wax", "lucy", "answering", "hans", "impressed", "slope", "stitches", "reggae", "failures", "poet", "conspiracy", "screwdriver", "surname", "theology", "nails", "evident", "whats", "rides", "rehab", "epic", "saturn", "organizer", "nut", "allergy", "sake", "twisted", "combinations", "preceding", "merit", "enzyme", "cumulative", "planes", "edmonton", "tackle", "disks", "straw", "condo", "pokemon", "amplifier", "arbitrary", "prominent", "retrieve", "retrieving", "lexington", "vernon", "sans", "titanium", "irs", "fairy", "builds", "contacted", "shaft", "lean", "sectional", "bye", "cdt", "recorders", "occasional", "leslie", "casio", "ana", "postings", "innovations", "kitty", "postcards", "dude", "subpoena", "drain", "monte", "fires", "algeria", "blessed", "luis", "reviewing", "cardiff", "cornwall", "favors", "potato", "panic", "explicitly", "sticks", "leone", "transsexual", "citizenship", "excuse", "reforms", "basement", "onion", "strand", "sandwich", "lawsuit", "alto", "informative", "girlfriend", "sorta", "subtitle", "cheque", "hierarchy", "influenced", "banners", "reject", "rejecting", "eau", "abandoned", "circles", "italic", "beats", "merry", "mil", "scuba", "gore", "complement", "cult", "dash", "passive", "mauritius", "valued", "cage", "checklist", "requesting", "courage", "verde", "scenarios", "gazette", "hitachi", "symptom", "extraction", "batman", "elevation", "hearings", "coleman", "hugh", "lap", "utilization", "beverages", "calibration", "jake", "souffle", "efficiently", "anaheim", "ping", "textbook", "dried", "entertaining", "prerequisite", "luther", "frontier", "settle", "settling", "stopping", "refugees", "knights", "hypothesis", "palmer", "medicines", "thud", "flux", "derby", "peaceful", "altered", "pontiac", "regression", "doctrine", "scenic", "trainers", "enhancements", "renewable", "intersection", "passwords", "sewing", "consistency", "collectors", "conclude", "concluding", "recognised", "munich", "oman", "celebs", "propose", "proposing", "azerbaijan", "sprinkle", "lighter", "rage", "uh", "astrology", "advisors", "thump", "pavilion", "tactics", "trusts", "occurring", "supplemental", "travelling", "talented", "annie", "pillow", "induction", "derek", "precisely", "shorter", "harley", "spreading", "provinces", "relying", "finals", "paraguay", "steal", "parcel", "refined", "fifteen", "widespread", "incidence", "fears", "predict", "predicting", "boutique", "transfusion", "acrylic", "rolled", "tuner", "avon", "incidents", "peterson", "squall", "rays", "shannon", "toddler", "enhancing", "flavor", "alike", "walt", "homeless", "horrible", "hungry", "metallic", "acne", "blocked", "interference", "warriors", "palestine", "libs", "undo", "cadillac", "atmospheric", "malawi", "transplant", "dana", "halo", "ppm", "curtis", "parental", "referenced", "strikes", "lesser", "publicity", "marathon", "ant", "proposition", "gays", "pressing", "gasoline", "apt", "dressed", "scout", "taillight", "belfast", "exec", "dealt", "niagara", "inf", "eos", "charms", "catalyst", "trader", "bucks", "trending", "allowance", "vcr", "denial", "designation", "thrown", "prepaid", "raises", "gem", "duplicate", "electro", "criterion", "badge", "wrist", "civilization", "analyzed", "vietnamese", "heath", "tremendous", "ballot", "lexus", "varying", "remedies", "validity", "trustee", "maui", "weighted", "angola", "trilogy", "squirt", "squirted", "performs", "tempo", "plastics", "realm", "corrected", "jenny", "helmet", "salaries", "postcard", "elephant", "yemen", "encountered", "tsunami", "scholar", "nickel", "internationally", "surrounded", "psi", "buses", "geology", "pct", "creatures", "coating", "commented", "wallet", "cleared", "smilies", "vids", "trough", "accomplish", "accomplishing", "boating", "drainage", "corners", "broader", "vegetarian", "rouge", "yeast", "yale", "newfoundland", "pas", "clearing", "investigated", "thermometer", "ambassador", "coated", "intend", "intending", "stephanie", "contacting", "vegetation", "doom", "louise", "kenny", "specially", "owen", "routines", "hitting", "yukon", "ultrasound", "beings", "bite", "aquatic", "reliance", "habits", "striking", "myth", "infectious", "podcasts", "singh", "gig", "gilbert", "sas", "ferrari", "continuity", "brook", "outputs", "phenomenon", "ensemble", "insulin", "assured", "biblical", "weed", "conscious", "accent", "eleven", "tropic", "wives", "ambient", "unfollow", "utilize", "mileage", "oecd", "prostate", "adaptor", "auburn", "unlock", "hyundai", "pledge", "vampire", "angela", "relates", "nitrogen", "xerox", "dice", "merger", "softball", "referrals", "quad", "dock", "differently", "mods", "framing", "organised", "musician", "blocking", "rwanda", "verb", "sorts", "integrating", "limiting", "dispatch", "dispatching", "revisions", "papua", "restored", "hint", "armor", "riders", "underneath", "chargers", "remark", "dozens", "varies", "reasoning", "liz", "rendered", "picking", "charitable", "guards", "annotated", "ccd", "convinced", "openings", "buys", "burlington", "replacing", "researcher", "verdict", "watershed", "councils", "occupations", "acknowledged", "kruger", "pockets", "granny", "pork", "equilibrium", "viral", "inquire", "pipes", "characterized", "laden", "aruba", "cottages", "realtor", "merge", "privilege", "edgar", "develops", "vanity", "qualifying", "chassis", "dubai", "estimation", "barn", "pushing", "fleece", "veto", "pediatric", "fare", "pierce", "allan", "dressing", "bald", "craps", "fuji", "frost", "leon", "institutes", "mold", "dame", "sally", "yacht", "tracy", "prefers", "drilling", "brochures", "herb", "ate", "breach", "whale", "traveller", "appropriations", "suspected", "tomatoes", "vlogger", "benchmark", "beginners", "instructors", "highlighted", "bedford", "wrench", "stationery", "idle", "mustang", "unauthorized", "clusters", "antibody", "competent", "momentum", "fin", "wiring", "pastor", "mud", "calvin", "uni", "shark", "contributor", "demonstrates", "phases", "grateful", "emerald", "gradually", "laughing", "grows", "whir", "cliff", "desirable", "tract", "ballet", "journalist", "abraham", "bumper", "afterwards", "webpage", "religions", "garlic", "hostels", "shine", "senegal", "explosion", "banned", "yall", "wendy", "briefs", "signatures", "diffs", "cove", "mumbai", "ozone", "disciplines", "casa", "daughters", "conversations", "xray", "radios", "tariff", "nvidia", "opponent", "pasta", "simplified", "muscles", "serum", "wrapped", "swift", "motherboard", "runtime", "inbox", "focal", "bibliographic", "eden", "distant", "incl", "champagne", "ala", "decimal", "deviation", "superintendent", "dip", "nbc", "samba", "hostel", "housewives", "zoology", "zipper", "employ", "employing", "mongolia", "penguin", "magical", "influences", "inspections", "irrigation", "miracle", "manually", "reprint", "reid", "hydraulic", "centered", "robertson", "flex", "yearly", "penetration", "wound", "belle", "rosa", "conviction", "hash", "omissions", "writings", "hamburg", "lazy", "mpg", "retrieval", "qualities", "cindy", "lolita", "fathers", "carb", "charging", "cas", "marvel", "lined", "dow", "prototype", "importantly", "petite", "apparatus", "upc", "terrain", "dui", "pens", "explaining", "yen", "strips", "gossip", "rangers", "nomination", "empirical", "rotary", "worm", "dependence", "discrete", "beginner", "boxed", "lid", "sexuality", "polyester", "cubic", "deaf", "commitments", "suggesting", "sapphire", "kinase", "skirts", "mats", "remainder", "crawford", "labeled", "privileges", "televisions", "specializing", "marking", "commodities", "pvc", "serbia", "sheriff", "griffin", "declined", "guyana", "spies", "blah", "mime", "neighbor", "motorcycles", "elect", "electing", "highways", "concentrate", "intimate", "reproductive", "preston", "deadly", "bunny", "chevy", "molecules", "rounds", "longest", "refrigerator", "intervals", "sentences", "dentists", "usda", "exclusion", "workstation", "holocaust", "keen", "flyer", "peas", "dosage", "receivers", "urls", "customise", "disposition", "variance", "navigator", "investigators", "cameroon", "baking", "marijuana", "adaptive", "computed", "needle", "baths", "cathedral", "brakes", "nirvana", "fairfield", "owns", "til", "sticky", "destiny", "generous", "madness", "emacs", "climb", "climbed", "blowing", "fascinating", "landscapes", "heated", "lafayette", "jackie", "wto", "computation", "hay", "cardiovascular", "cardiac", "salvation", "dover", "adrian", "predictions", "accompanying", "vatican", "brutal", "learners", "selective", "arbitration", "configuring", "token", "editorials", "zinc", "sacrifice", "seekers", "guru", "removable", "convergence", "yields", "gibraltar", "levy", "suited", "numeric", "anthropology", "skating", "kinda", "aberdeen", "emperor", "grad", "malpractice", "dylan", "bras", "belts", "blacks", "educated", "rebates", "reporters", "burke", "proudly", "pix", "necessity", "rendering", "mic", "inserted", "pulling", "kyle", "obesity", "curves", "suburban", "touring", "clara", "vertex", "hepatitis", "nationally", "tomato", "andorra", "waterproof", "expired", "travels", "flush", "waiver", "pale", "specialties", "hayes", "humanitarian", "invitations", "functioning", "delight", "delighting", "survivor", "garcia", "economies", "alexandria", "bacterial", "moses", "counted", "undertake", "declare", "declaring", "continuously", "johns", "valves", "gaps", "impaired", "achievements", "donors", "tear", "jewel", "teddy", "convertible", "teaches", "ventures", "nil", "stranger", "tragedy", "julian", "nest", "nesting", "pam", "dryer", "painful", "velvet", "tribunal", "ruled", "nato", "pensions", "prayers", "funky", "secretariat", "nowhere", "cop", "paragraphs", "gale", "joins", "adolescent", "nominations", "wesley", "dim", "lately", "cancelled", "scary", "mattress", "mpegs", "brunei", "likewise", "banana", "introductory", "slovak", "cakes", "stan", "reservoir", "occurrence", "idol", "bloody", "mixer", "remind", "worcester", "demographic", "charming", "mai", "tooth", "disciplinary", "annoying", "respected", "stays", "disclose", "affair", "drove", "washer", "upset", "restrict", "restricting", "springer", "beside", "mines", "portraits", "rebound", "logan", "mentor", "interpreted", "evaluations", "fought", "baghdad", "elimination", "metres", "hypothetical", "immigrants", "complimentary", "helicopter", "pencil", "freeze", "performer", "titled", "commissions", "sphere", "moss", "ratios", "concord", "graduated", "endorsed", "surprising", "walnut", "lance", "ladder", "italia", "unnecessary", "dramatically", "liberia", "sherman", "cork", "maximize", "hansen", "senators", "workout", "mali", "yugoslavia", "bleeding", "characterization", "colon", "likelihood", "lanes", "purse", "fundamentals", "contamination", "mtv", "endangered", "compromise", "optimize", "stating", "dome", "caroline", "leu", "expiration", "align", "peripheral", "bless", "blessing", "engaging", "negotiation", "crest", "opponents", "triumph", "nominated", "confidentiality", "electoral", "welding", "deferred", "alternatively", "heel", "alloy", "condos", "plots", "polished", "yang", "gently", "greensboro", "tulsa", "locking", "casey", "controversial", "draws", "fridge", "blanket", "bloom", "simpsons", "lou", "elliott", "recovered", "fraser", "justify", "upgrading", "blades", "pgp", "loops", "surge", "trauma", "aw", "tahoe", "advert", "possess", "demanding", "defensive", "sip", "flashers", "subaru", "forbidden", "vanilla", "programmers", "monitored", "installations", "deutschland", "picnic", "souls", "arrivals", "practitioner", "motivated", "dumb", "smithsonian", "hollow", "vault", "securely", "examining", "groove", "revelation", "pursuit", "delegation", "wires", "dictionaries", "mails", "backing", "greenhouse", "sleeps", "blake", "transparency", "dee", "travis", "endless", "figured", "orbit", "currencies", "niger", "bacon", "survivors", "positioning", "heater", "colony", "cannon", "circus", "promoted", "forbes", "mae", "moldova", "mel", "descending", "spine", "trout", "enclosed", "feat", "temporarily", "cooked", "thriller", "transmit", "transmitting", "fatty", "gerald", "pressed", "frequencies", "scanned", "reflections", "hunger", "sic", "municipality", "usps", "joyce", "detective", "surgeon", "cement", "experiencing", "fireplace", "endorsement", "planners", "disputes", "textiles", "missile", "intranet", "closes", "seq", "psychiatry", "persistent", "deborah", "marco", "assists", "summaries", "glow", "gabriel", "auditor", "aquarium", "violin", "prophet", "cir", "bracket", "isaac", "oxide", "oaks", "magnificent", "erik", "colleague", "naples", "promptly", "modems", "adaptation", "harmful", "paintball", "prozac", "sexually", "enclosure", "dividend", "newark", "glucose", "phantom", "norm", "playback", "supervisors", "westminster", "turtle", "ips", "distances", "absorption", "treasures", "warned", "neural", "ware", "fossil", "mia", "hometown", "badly", "transcripts", "apollo", "disappointed", "persian", "continually", "communist", "collectible", "handmade", "greene", "entrepreneurs", "robots", "grenada", "creations", "jade", "scoop", "acquisitions", "foul", "keno", "earning", "mailman", "nested", "galoshes", "biodiversity", "excitement", "somalia", "movers", "verbal", "blink", "presently", "seas", "carlo", "workflow", "mysterious", "novelty", "bryant", "tiles", "librarian", "subsidiaries", "switched", "stockholm", "tamil", "pose", "posed", "fuzzy", "indonesian", "grams", "therapist", "richards", "budgets", "toolkit", "promising", "relaxation", "goat", "render", "carmen", "ira", "thereafter", "hardwood", "temporal", "sail", "sailed", "forge", "commissioners", "dense", "dts", "brave", "forwarding", "awful", "nightmare", "airplane", "reductions", "southampton", "istanbul", "impose", "imposing", "organisms", "sega", "telescope", "viewers", "asbestos", "portsmouth", "meyer", "enters", "pod", "savage", "advancement", "harassment", "willow", "resumes", "bolt", "gage", "throwing", "existed", "generators", "wagon", "barbie", "dat", "favour", "knock", "urge", "generates", "potatoes", "thorough", "replication", "inexpensive", "kurt", "receptors", "peers", "roland", "optimum", "neon", "interventions", "quilt", "huntington", "creature", "ours", "mounts", "syracuse", "internship", "lone", "refresh", "aluminium", "snowboard", "snowboarded", "webcast", "michel", "evanescence", "subtle", "coordinated", "shipments", "maldives", "stripes", "firmware", "antarctica", "cope", "shepherd", "canberra", "cradle", "chancellor", "mambo", "lime", "kirk", "flour", "controversy", "legendary", "sympathy", "choir", "avoiding", "beautifully", "blond", "expects", "jumping", "fabrics", "antibodies", "polymer", "hygiene", "wit", "poultry", "virtue", "burst", "examinations", "surgeons", "bouquet", "immunology", "promotes", "mandate", "wiley", "departmental", "bbs", "spas", "ind", "corpus", "johnston", "terminology", "gentleman", "fibre", "reproduce", "reproducing", "convicted", "shades", "jets", "indices", "roommates", "adware", "threatening", "spokesman", "zoloft", "activists", "frankfurt", "prisoner", "daisy", "halifax", "encourages", "cursor", "assembled", "earliest", "donated", "stuffed", "restructuring", "insects", "terminals", "crude", "morrison", "maiden", "simulations", "sufficiently", "examines", "viking", "myrtle", "bored", "cleanup", "yarn", "knit", "knitted", "conditional", "mug", "crossword", "bother", "budapest", "conceptual", "knitting", "attacked", "bhutan", "liechtenstein", "mating", "compute", "redhead", "arrives", "translator", "automobiles", "tractor", "allah", "continent", "unwrap", "fares", "longitude", "resist", "resisting", "challenged", "hoped", "pike", "safer", "insertion", "instrumentation", "ids", "hugo", "wagner", "constraint", "groundwater", "touched", "strengthening", "cologne", "wishing", "ranger", "smallest", "insulation", "newman", "marsh", "ricky", "scared", "theta", "infringement", "bent", "laos", "subjective", "monsters", "asylum", "lightbox", "robbie", "stake", "cocktail", "outlets", "swaziland", "varieties", "arbor", "configurations", "poison", "cheater", "cheaters", "cheated", "cheating", "liar", "liars", "lied", "fooled", "fooling", "fooler", "faker", "fakers", "faking", "bluffer", "bluffing", "bluffed", "trickster", "tricksters", "trickery", "deceiver", "deceivers", "deceiving", "deceived", "betrayer", "betrayers", "betraying", "betrayed", "sore", "loser", "losers", "tying", "boyfriend", "fiance", "fiancee", "widow", "widower", "stepmother", "stepfather", "stepson", "stepdaughter", "stepbrother", "stepsister", "sibling", "siblings", "grandson", "granddaughter", "grandparent", "grandparents", "nephew", "niece", "cousins", "inlaw", "inlaws", "anxious", "sleepy", "thirsty", "jealous", "ashamed", "embarrassed", "hopeful", "hopeless", "cheerful", "gloomy", "joyful", "furious", "relaxed", "stressed", "terrified", "delighted", "frustrated", "miserable", "kitten", "hamster", "gerbil", "parrot", "canary", "goldfish", "lizard", "gecko", "toad", "snail", "wasp", "beetle", "moth", "caterpillar", "ladybug", "dragonfly", "grasshopper", "firefly", "slug", "leopard", "cheetah", "panther", "giraffe", "zebra", "hippo", "rhino", "gorilla", "chimpanzee", "kangaroo", "koala", "panda", "sloth", "otter", "raccoon", "squirrel", "chipmunk", "hedgehog", "porcupine", "skunk", "coyote", "moose", "elk", "antelope", "bison", "llama", "alpaca", "donkey", "mule", "ox", "hog", "boar", "rooster", "hen", "goose", "swan", "pigeon", "dove", "sparrow", "falcon", "owl", "vulture", "crow", "raven", "woodpecker", "peacock", "ostrich", "flamingo", "pelican", "seagull", "stork", "crane", "heron", "dolphin", "octopus", "squid", "jellyfish", "starfish", "crab", "lobster", "shrimp", "clam", "oyster", "seahorse", "walrus", "sealion", "blouse", "sweater", "vest", "scarf", "mittens", "sneakers", "sandals", "slippers", "beanie", "bowtie", "tuxedo", "gown", "pajamas", "swimsuit", "raincoat", "umbrella", "hallway", "attic", "closet", "pantry", "cellar", "porch", "balcony", "backyard", "driveway", "mailbox", "doorbell", "staircase", "elevator", "curtain", "vase", "drawer", "dresser", "wardrobe", "couch", "armchair", "recliner", "ottoman", "stool", "bookshelf", "spoon", "pitcher", "kettle", "skillet", "spatula", "whisk", "ladle", "strainer", "colander", "blender", "toaster", "stove", "freezer", "dishwasher", "faucet", "napkin", "tablecloth", "placemat", "grape", "strawberry", "blueberry", "raspberry", "watermelon", "cantaloupe", "honeydew", "peach", "plum", "apricot", "pear", "pineapple", "mango", "papaya", "kiwi", "coconut", "grapefruit", "pomegranate", "raisin", "prune", "avocado", "carrot", "cucumber", "lettuce", "spinach", "broccoli", "cauliflower", "cabbage", "celery", "mushroom", "pumpkin", "squash", "zucchini", "eggplant", "radish", "beet", "turnip", "artichoke", "asparagus", "yogurt", "noodle", "cereal", "oatmeal", "pancake", "waffle", "burger", "hotdog", "taco", "burrito", "sushi", "stew", "dessert", "donut", "muffin", "brownie", "icecream", "popcorn", "pretzel", "cracker", "scooter", "skateboard", "rollerblades", "stroller", "wheelchair", "subway", "tram", "canoe", "kayak", "sailboat", "submarine", "spaceship", "badminton", "snowboarding", "jogging", "rowing", "fencing", "archery", "billiards", "darts", "checkers", "dominoes", "cello", "flute", "clarinet", "trumpet", "trombone", "saxophone", "harmonica", "accordion", "banjo", "ukulele", "harp", "xylophone", "tambourine", "cymbal", "dancer", "painter", "sculptor", "butcher", "fisherman", "carpenter", "electrician", "plumber", "mechanic", "sailor", "firefighter", "astronaut", "accountant", "banker", "cashier", "waiter", "waitress", "bartender", "barber", "hairdresser", "tailor", "jeweler", "gardener", "janitor", "dusk", "weekday", "rainy", "snowy", "windy", "stormy", "foggy", "humid", "breezy", "chilly", "freezing", "scorching", "thunderstorm", "hail", "sleet", "drizzle", "blizzard", "tornado", "volcano", "avalanche", "drought", "meadow", "swamp", "glacier", "iceberg", "waterfall", "dune", "mansion", "bungalow", "farmhouse", "skyscraper", "lighthouse", "windmill", "bakery", "diner", "gymnasium", "mosque", "synagogue", "playground", "amphitheater", "courthouse", "fortress", "sidewalk", "crosswalk", "roundabout", "unicorn", "elf", "dwarf", "goblin", "troll", "ogre", "mermaid", "werewolf", "zombie", "skeleton", "mummy", "cyborg", "superhero", "villain", "pirate", "ninja", "samurai", "gladiator", "sorcerer", "sorceress", "whisper", "shout", "mumble", "giggle", "chuckle", "sob", "weep", "sigh", "gasp", "yawn", "sneeze", "cough", "hiccup", "snore", "wink", "stare", "glare", "nod", "shrug", "clap", "applaud", "cheer", "boo", "hug", "embrace", "tickle", "slap", "pinch", "chew", "swallow", "spit", "drool", "sweat", "shiver", "tremble", "leap", "jog", "jogged", "stroll", "wander", "crawl", "plunge", "drown", "paddle", "drift", "glide", "soar", "hover", "flutter", "perch", "hatch", "molt", "hibernate", "migrate", "assemble", "assembling", "dismantle", "mend", "sew", "sewed", "stitch", "weave", "carve", "sculpt", "untie", "knot", "unravel", "pile", "heap", "scatter", "murmur", "chatter", "babble", "rumor", "confess", "confessing", "negotiate", "persuade", "convince", "convincing", "apologize", "forgive", "accuse", "accusing", "clarify", "riddle", "clue", "syllabus", "alphabet", "vowel", "consonant", "syllable", "caption", "footnote", "synonym", "antonym", "homonym", "metaphor", "simile", "rhyme", "cunning", "sneaky", "sly", "clever", "crafty", "deceitful", "dishonest", "truthful", "loyal", "faithful", "unfaithful", "jealousy", "envy", "suspicion", "betrayal", "forgiveness", "reconciliation", "heartbreak", "breakup", "honeymoon", "crush", "infatuation", "flirt", "flirted", "flirting", "possessive", "clingy", "backpack", "suitcase", "itinerary", "compass", "binoculars", "flashlight", "lantern", "sleepingbag", "campfire", "marshmallow", "hammock", "thermos", "canteen", "snowman", "igloo", "sled", "sleigh", "mitten", "earmuffs", "icicle", "snowflake", "frostbite", "hibernation", "fireworks", "confetti", "streamer", "decoration", "whisker", "paw", "claw", "fang", "mane", "hoof", "antler", "tusk", "beak", "feather", "gill", "puddle", "gravel", "pebble", "snack", "snacks", "soda", "melody", "melodies", "grandmother", "grandfather", "aunt", "aunts", "uncles", "grandma", "grandpa", "ax", "dont", "wont", "isnt", "arent", "wasnt", "werent", "hasnt", "havent", "hadnt", "doesnt", "didnt", "wouldnt", "couldnt", "shouldnt", "mustnt", "neednt", "oxen", "geese", "syllabi", "phenomena", "vertices"];
+
+const WORDS = [].concat(TIER_0_ULTRA_COMMON, TIER_1_VERY_COMMON, TIER_2_COMMON, TIER_3_FAIRLY_COMMON, TIER_4_MODERATE, TIER_5_LESS_COMMON, TIER_6_UNCOMMON, TIER_7_RARE);
+
+function normalizePattern(raw){
+  return raw.trim().split(/\s+/).filter(Boolean).map(w => w.toLowerCase());
+}
+
+// Tier weights only (which words belong to which tier is now determined by
+// which TIER_n_... array they live in, above). Weight controls how strongly
+// that tier counts toward letter-probability calculations.
+const TIER_WEIGHTS = [1.0, 0.9, 0.8, 0.72, 0.64, 0.56, 0.48, 0.4];
+const TIER_WORD_ARRAYS = [TIER_0_ULTRA_COMMON, TIER_1_VERY_COMMON, TIER_2_COMMON, TIER_3_FAIRLY_COMMON, TIER_4_MODERATE, TIER_5_LESS_COMMON, TIER_6_UNCOMMON, TIER_7_RARE ];
+
+const WORD_TIER = new Map();
+TIER_WORD_ARRAYS.forEach((arr, tier) => {
+  arr.forEach(w => WORD_TIER.set(w, tier));
+});
+const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('');
+let wrongLetters = new Set();
+let resultsExpandLevel = 0; // 0 = top 5, 1 = top ~12, 2 = show all
+
+function setExpandLevel(level){
+  resultsExpandLevel = level;
+  solve();
+  const panel = document.getElementById('bestGuessPanel');
+  if(panel) panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function renderKeyboard(){
+  const words = normalizePattern(document.getElementById('pattern').value);
+  const revealed = revealedLetters(words);
+  const kb = document.getElementById('keyboard');
+  kb.innerHTML = '';
+  ALPHABET.forEach(l => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'key';
+    btn.textContent = l.toUpperCase();
+    if(revealed.has(l)){
+      btn.classList.add('disabled');
+      btn.disabled = true;
+      wrongLetters.delete(l);
+    } else if(wrongLetters.has(l)){
+      btn.classList.add('active');
+    }
+    btn.addEventListener('click', () => {
+      if(wrongLetters.has(l)) wrongLetters.delete(l); else wrongLetters.add(l);
+      renderKeyboard();
+      solve();
+    });
+    kb.appendChild(btn);
+  });
+  alignGuessesHint();
+}
+
+function alignGuessesHint(){
+  // No-op: justify-content:center on .keyboard now handles centering every
+  // row (including a shorter last row) without needing a computed width.
+}
+
+function renderTilesEdit(){
+  const words = normalizePattern(document.getElementById('pattern').value);
+  const container = document.getElementById('tilesEdit');
+  container.innerHTML = '';
+  words.forEach((w) => {
+    const wordDiv = document.createElement('div');
+    wordDiv.className = 'word-tiles-edit';
+    // Grow proportionally to letter count, so a 5-letter word gets a fairer
+    // share of leftover space than a 1-letter word sharing the same line.
+    // Explicit basis (not 'auto') avoids ambiguous sizing for a nested flex
+    // container whose own children also grow.
+    const baseWidth = w.length * 34 + Math.max(0, w.length - 1) * 5;
+    wordDiv.style.flex = w.length + ' 0 ' + baseWidth + 'px';
+    for(const ch of w){
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.maxLength = 1;
+      inp.className = 'tile-input';
+      inp.autocomplete = 'off';
+      inp.autocapitalize = 'off';
+      inp.spellcheck = false;
+      inp.value = ch === '_' ? '' : ch.toUpperCase();
+      inp.addEventListener('input', onTileInput);
+      inp.addEventListener('keydown', onTileKeydown);
+      inp.addEventListener('beforeinput', onTileBeforeInput);
+      inp.addEventListener('focus', function(){ this.select(); });
+      wordDiv.appendChild(inp);
+    }
+    container.appendChild(wordDiv);
+  });
+  updateTileMaxWidth();
+}
+
+function updateTileMaxWidth(){
+  const container = document.getElementById('tilesEdit');
+  // Cap each letter tile at 20% of the overall input box's width, so a
+  // short word's tiles can grow to fill the row without any single tile
+  // ballooning to span the whole box.
+  const boxWidth = container.getBoundingClientRect().width;
+  if (boxWidth > 0){
+    container.style.setProperty('--tile-max', (boxWidth * 0.2) + 'px');
+  }
+}
+window.addEventListener('resize', updateTileMaxWidth);
+
+function syncPatternFromTiles(){
+  const container = document.getElementById('tilesEdit');
+  const words = [...container.children].map(wordDiv =>
+    [...wordDiv.children].map(inp => {
+      const v = inp.value.trim().toLowerCase();
+      return /^[a-z]$/.test(v) ? v : '_';
+    }).join('')
+  );
+  document.getElementById('pattern').value = words.join(' ');
+}
+
+function onTileBeforeInput(e){
+  // Fires before the browser applies the keystroke, so we can catch a
+  // space here and just move focus, without ever letting it overwrite
+  // a selected/existing letter (which 'input'-level handling can't undo).
+  if(e.data === ' '){
+    e.preventDefault();
+    advanceTileFocus(e.target);
+  }
+}
+
+function onTileInput(e){
+  const inp = e.target;
+  const letter = inp.value.replace(/[^a-zA-Z]/g, '').slice(-1);
+  inp.value = letter.toUpperCase();
+  syncPatternFromTiles();
+  renderKeyboard();
+  solve();
+  if(letter){
+    advanceTileFocus(inp);
+  }
+}
+
+function advanceTileFocus(inp){
+  const wordDiv = inp.parentElement;
+  let next = inp.nextElementSibling;
+  if(!next){
+    const nextWordDiv = wordDiv.nextElementSibling;
+    next = nextWordDiv ? nextWordDiv.querySelector('.tile-input') : null;
+  }
+  if(next) next.focus();
+}
+
+function onTileKeydown(e){
+  const inp = e.target;
+  if(e.key === 'Backspace' && !inp.value){
+    const wordDiv = inp.parentElement;
+    let prev = inp.previousElementSibling;
+    if(!prev){
+      const prevWordDiv = wordDiv.previousElementSibling;
+      if(prevWordDiv){
+        const tiles = prevWordDiv.querySelectorAll('.tile-input');
+        prev = tiles[tiles.length - 1] || null;
+      }
+    }
+    if(prev){
+      e.preventDefault();
+      prev.value = '';
+      syncPatternFromTiles();
+      renderKeyboard();
+      solve();
+      prev.focus();
+    }
+  } else if(e.key === 'ArrowLeft'){
+    const prev = inp.previousElementSibling;
+    if(prev){ e.preventDefault(); prev.focus(); }
+  } else if(e.key === 'ArrowRight'){
+    const next = inp.nextElementSibling;
+    if(next){ e.preventDefault(); next.focus(); }
+  } else if(e.key === ' '){
+    e.preventDefault();
+    advanceTileFocus(inp);
+  }
+}
+
+function revealedLetters(words){
+  const set = new Set();
+  for(const w of words){
+    for(const ch of w){
+      if(ch !== '_' && /[a-z]/.test(ch)) set.add(ch);
+    }
+  }
+  return set;
+}
+
+function matchesPattern(word, pattern, excluded){
+  if(word.length !== pattern.length) return false;
+  for(let i=0;i<pattern.length;i++){
+    const p = pattern[i], w = word[i];
+    if(p !== '_'){
+      if(w !== p) return false;
+    } else {
+      if(excluded.has(w)) return false;
+    }
+  }
+  return true;
+}
+
+function solve(){
+  const rawPattern = document.getElementById('pattern').value;
+  const rawCustom = document.getElementById('custom').value;
+  const warnEl = document.getElementById('warn');
+  const outEl = document.getElementById('output');
+  warnEl.innerHTML = '';
+  outEl.innerHTML = '';
+
+  const words = normalizePattern(rawPattern);
+  if(words.length === 0){
+    warnEl.innerHTML = '<div class="warn">Enter a pattern first. Use underscores for unknown letters.</div>';
+    return false;
+  }
+  for(const w of words){
+    if(!/^[a-z_]+$/.test(w)){
+      warnEl.innerHTML = '<div class="warn">Pattern can only contain letters and underscores, separated by spaces.</div>';
+      return false;
+    }
+  }
+
+  const revealed = revealedLetters(words);
+  const excluded = new Set([...wrongLetters, ...revealed]);
+
+  const customWords = rawCustom.split('\n').map(s=>s.trim().toLowerCase()).filter(s=>/^[a-z]+$/.test(s));
+  const dict = customWords.length ? WORDS.concat(customWords) : WORDS;
+
+  // candidates per word
+  const candidatesPerWord = words.map(w => dict.filter(d => matchesPattern(d, w, excluded)));
+
+  // Words earlier in WORDS are more common (the list is frequency-ordered
+  // into tiers, see the TIER_n_... arrays above). Weight each candidate's contribution by
+  // its tier so rare words influence the suggested letter less than common
+  // ones. Custom words (not in the dictionary's tiers) get top weight.
+  function rankWeight(word){
+    const tier = WORD_TIER.has(word) ? WORD_TIER.get(word) : 0;
+    return TIER_WEIGHTS[tier];
+  }
+
+  // letter scoring: for each word segment, compute the actual probability
+  // that a given letter appears somewhere in that word's blanks, weighted
+  // by how common each candidate is. If a segment has exactly one candidate,
+  // every letter in its blanks gets probability 1 (100%) for that word,
+  // since it's the only word that fits. Segment probabilities are then
+  // combined across the whole phrase so a certain letter in any one word
+  // shows as 100% overall, rather than being diluted by other words.
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+  let totalCandidates = 0;
+  const missProb = {};
+  for(const l of alphabet) missProb[l] = 1;
+
+  words.forEach((pattern, idx) => {
+    const cands = candidatesPerWord[idx];
+    totalCandidates += cands.length;
+    if(cands.length === 0) return;
+
+    const segCounts = {};
+    let segWeight = 0;
+    for(const cand of cands){
+      const weight = rankWeight(cand);
+      segWeight += weight;
+      const seen = new Set();
+      for(let i=0;i<pattern.length;i++){
+        if(pattern[i] === '_'){
+          const ch = cand[i];
+          if(!excluded.has(ch) && !seen.has(ch)){
+            seen.add(ch);
+            segCounts[ch] = (segCounts[ch]||0) + weight;
+          }
+        }
+      }
+    }
+    if(segWeight === 0) return;
+    for(const l of alphabet){
+      const p = (segCounts[l]||0) / segWeight;
+      missProb[l] *= (1 - p);
+    }
+  });
+
+  const anyBlanks = words.some(w => w.includes('_'));
+  const anyZero = candidatesPerWord.some((c,i) => words[i].includes('_') && c.length === 0);
+
+  if(anyZero){
+    warnEl.innerHTML = '<div class="warn">No dictionary matches for at least one word. It may be a proper noun, a rarer word, or your guesses may conflict. Try adding it under "custom words."</div>';
+  }
+
+  if(!anyBlanks){
+    outEl.innerHTML = '<div class="panel" data-tag="Result" id="bestGuessPanel"><div class="results-head"><h2>Solved</h2></div><div class="hint">No blanks left. The phrase is fully revealed.</div></div>';
+    return true;
+  }
+
+  const rankedAll = alphabet
+    .filter(l => !excluded.has(l))
+    .map(l => ({letter:l, pct: (1 - missProb[l]) * 100}))
+    .sort((a,b)=> b.pct - a.pct)
+    .filter(r => r.pct > 0.05);
+
+  const TIER_SIZES = [5, 12, Infinity];
+  const visibleCount = Math.min(rankedAll.length, TIER_SIZES[resultsExpandLevel]);
+  const ranked = rankedAll.slice(0, visibleCount);
+
+  let barsHTML = '';
+  let fakeTieNote = false;
+  if(ranked.length === 0){
+    barsHTML = '<div class="hint">No further letter suggestions. Dictionary candidates are exhausted. Try widening with custom words.</div>';
+  } else {
+    // Only ever display 100% when a letter is truly certain (missProb ~ 0).
+    // Anything just under that gets capped at 99% on display so a near-miss
+    // never gets shown as a false guarantee.
+    const displayPct = (pct) => pct >= 99.95 ? 100 : Math.min(99, Math.round(pct));
+
+    const max = ranked[0].pct;
+    const maxDisplay = displayPct(max);
+    ranked.forEach((r) => {
+      const isTop = Math.abs(r.pct - max) < 0.0001;
+      if(!isTop && displayPct(r.pct) === maxDisplay) fakeTieNote = true;
+      barsHTML += '<div class="lbar'+(isTop?' top':'')+'">'
+        + '<div class="ch">'+r.letter.toUpperCase()+'</div>'
+        + '<div class="track"><div class="fill" style="width:'+ (max? (r.pct/max*100) : 0) +'%"></div></div>'
+        + '<div class="pct">'+displayPct(r.pct)+'%</div>'
+        + '</div>';
+    });
+    if(fakeTieNote){
+      barsHTML += '<div class="hint" style="margin-top:10px; text-align:center;">Results are rounded. The best answer is at the top.</div>';
+    }
+    const showUp = resultsExpandLevel > 0;
+    const showDown = visibleCount < rankedAll.length;
+    if(showUp || showDown){
+      barsHTML += '<div class="expand-controls">';
+      if(showUp){
+        const prevLevel = resultsExpandLevel - 1;
+        barsHTML += '<button type="button" class="expand-btn" onclick="setExpandLevel('+prevLevel+')" aria-label="Show fewer letters">&#9650;</button>';
+      }
+      if(showDown){
+        const nextLevel = resultsExpandLevel + 1;
+        barsHTML += '<button type="button" class="expand-btn" onclick="setExpandLevel('+nextLevel+')" aria-label="Show more letters">&#9660;</button>';
+      }
+      barsHTML += '</div>';
+    }
+  }
+
+  let segHTML = '';
+  words.forEach((pattern, idx) => {
+    if(!pattern.includes('_')) return;
+    const cands = candidatesPerWord[idx];
+    const shown = cands.slice(0, 14);
+    segHTML += '<div class="seg"><div class="seg-title">Word '+(idx+1)+' &middot; '+pattern.length+' letters &middot; '+cands.length+' possible word'+(cands.length===1?'':'s')+'</div>';
+    if(cands.length === 0){
+      segHTML += '<div class="empty-note">No dictionary word fits this pattern.</div>';
+    } else {
+      segHTML += '<div class="cand-list">';
+      shown.forEach(c => segHTML += '<span class="cand">'+c+'</span>');
+      if(cands.length > shown.length) segHTML += '<span class="more">+ '+(cands.length-shown.length)+' more</span>';
+      segHTML += '</div>';
+    }
+    segHTML += '</div>';
+  });
+
+  outEl.innerHTML =
+    '<div class="panel notag" data-tag="Next Guess" id="bestGuessPanel">'
+      + '<div class="results-head"><h2>Best guess</h2><div class="count-pill">'+totalCandidates+' possible words</div></div>'
+      + '<div class="letter-bars">'+barsHTML+'</div>'
+    + '</div>'
+    + '<div class="panel notag" data-tag="Candidates">'
+      + '<div class="results-head"><h2>Matching words</h2></div>'
+      + segHTML
+    + '</div>';
+  return true;
+}
+
+const PUZZLE_LABEL_TEXT = 'Fill in the word or phrase as you know it. Use _ for unknown letters.';
+const PUZZLE_LABEL_TILES = 'Fill in letters';
+
+function showTilesMode(){
+  renderTilesEdit();
+  document.getElementById('pattern').style.display = 'none';
+  document.getElementById('tilesEdit').style.display = '';
+  document.getElementById('editLink').style.display = 'inline-block';
+  document.getElementById('puzzleLabel').textContent = PUZZLE_LABEL_TILES;
+}
+
+function showTextMode(){
+  document.getElementById('pattern').style.display = '';
+  document.getElementById('tilesEdit').style.display = 'none';
+  document.getElementById('editLink').style.display = 'none';
+  document.getElementById('puzzleLabel').textContent = PUZZLE_LABEL_TEXT;
+}
+
+function solveAndScroll(){
+  const ok = solve();
+  if(ok){
+    showTilesMode();
+  }
+  requestAnimationFrame(() => {
+    const target = document.getElementById('bestGuessPanel');
+    if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+}
+
+document.getElementById('solveBtn').addEventListener('click', solveAndScroll);
+document.getElementById('editLink').addEventListener('click', () => {
+  showTextMode();
+  document.getElementById('pattern').focus();
+});
+document.getElementById('pattern').addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); solveAndScroll(); }});
+document.getElementById('pattern').addEventListener('input', () => { renderKeyboard(); renderTilesEdit(); });
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('pattern').value = '';
+  document.getElementById('custom').value = '';
+  wrongLetters.clear();
+  resultsExpandLevel = 0;
+  showTextMode();
+  renderKeyboard();
+  renderTilesEdit();
+  document.getElementById('output').innerHTML = '';
+  document.getElementById('warn').innerHTML = '';
+});
+
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const isDark = document.documentElement.classList.toggle('dark');
+  document.querySelector('#themeToggle .theme-icon').textContent = isDark ? '☀️' : '🌙';
+  document.querySelector('#themeToggle .theme-label').textContent = isDark ? 'Light' : 'Dark';
+});
+
+// Collapse the theme fab to just its icon after a real scroll-down gesture,
+// reveal it only after a deliberate, sustained scroll-up. Samples scroll
+// position at a fixed interval; any interval with near-zero movement counts
+// as a pause and resets the accumulated distance, so slow or hesitant
+// scrolling never builds up enough net movement to trigger a change.
+let gestureStartY = window.scrollY;
+let lastSampleY = window.scrollY;
+const UP_THRESHOLD = 140;
+const DOWN_THRESHOLD = 55;
+const PAUSE_DELTA = 6;
+const SAMPLE_MS = 150;
+
+setInterval(() => {
+  const currentY = window.scrollY;
+  const sampleDelta = currentY - lastSampleY;
+  const fab = document.getElementById('themeToggle');
+
+  if(Math.abs(sampleDelta) < PAUSE_DELTA){
+    gestureStartY = currentY;
+  } else {
+    const net = currentY - gestureStartY;
+    if(net > DOWN_THRESHOLD && currentY > 60){
+      fab.classList.add('collapsed');
+      gestureStartY = currentY;
+    } else if(net < -UP_THRESHOLD){
+      fab.classList.remove('collapsed');
+      gestureStartY = currentY;
+    }
+  }
+  lastSampleY = currentY;
+}, SAMPLE_MS);
+
+window.addEventListener('resize', alignGuessesHint, { passive: true });
+
+// demo default
+document.getElementById('pattern').value = '_e__o wor_d';
+renderKeyboard();
+renderTilesEdit();
+solve();
+
+// keep the displayed dictionary size in sync with the actual word list
+(function(){
+  const count = WORDS.length.toLocaleString();
+  const sub = document.getElementById('wordCountSub');
+  const footer = document.getElementById('wordCountFooter');
+  if(sub) sub.textContent = count;
+  if(footer) footer.textContent = count;
+})();
+</script>
+</body>
+</html>
