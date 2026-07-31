@@ -19,4 +19,4 @@ There are numerous hangman solvers online, so why make another one? I had notice
 It uses letter frequency to calculate the probabilities. It has a very large dictionary sorted into 8 sections with different weightings, based on how frequently they are used, so common words are weighted higher than obscure words. It also has a spot to add custom words.
 
 **How it was made:**  
-It is coded with Claude, but that is only because I don't know how to code. I spent a lot of time making the interface as intuitive, clean, and visually appealing as I could. When I was looking to find a website to host my HTML, I first stumbled on Tenet Cloud. It seemed good enough, and it was free, so I decided to use it, so that is why the website has the edgeone.dev domain.
+It is coded with Claude, but that is only because I don't know how to code. I spent a lot of time making the interface as intuitive, clean, and visually appealing as I could. When I was looking to find a website to host my HTML, I first stumbled on Tencent Cloud. It seemed good enough, and it was free, so I decided to use it, so that is why the website has the edgeone.dev domain.
