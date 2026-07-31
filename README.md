@@ -1,7 +1,6 @@
 # Hangman Solver
-The best hangman solver with letter probabilities and a clean, easy-to-use interface.  
+The best hangman solver with letter probabilities and a clean, easy-to-use interface. It will always be free with no ads, and the interface is designed for both mobile and desktop.   
 Here is the link to the website: **[hangman-solver.edgeone.dev](https://hangman-solver.edgeone.dev/)**  
-It will always be free with no ads, and the interface is designed for both mobile and desktop.  
 
 **Why a new Hangman Solver?**  
 There are numerous hangman solvers online, so why make another one? I had noticed that there weren't any hangman solvers online that had all of the features I wanted; they all were missing essentials that I thought would make the best hangman solver. Some of them had ads, most didn't have word/letter probabilities, and I didn't find a single one with an interface that I liked or was easy to use. Also, the dictionaries for each solver either didn't have enough words or had so many words that they were including gibberish. There were also not many that used word frequencies to calculate letter probabilities. Because of all of these problems with the current sites, I decided to just go ahead and make my own Hangman solver that solved all of these problems.
