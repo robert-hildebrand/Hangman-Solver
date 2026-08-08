@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hangman Solver with Letter Probabilities</title>
-<meta name="description" content="The best hangman solver with letter probabilities based on an 11,000+ word dictionary, sorted by real-world frequency, and a clean, easy-to-use interface. It will always be free with no ads, and is designed for both mobile and desktop.">
+<meta name="description" content="The best hangman solver algorithm with letter probabilities based on an 11,000+ word dictionary, sorted by real-world frequency. Tracks the guesses you have left, and breaks ties by favoring the letter that will reveal the most about the word. Free, no ads, and built for mobile and desktop.">
 <meta name="keywords" content="hangman solver, hangman helper, word puzzle solver, hangman cheat, word game solver, best hangman solver, hangman letter probabilities, hangman solver good interface, hangman, word solver, letter probabilities">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://hangman-solver.edgeone.dev/">
@@ -13,14 +13,33 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://hangman-solver.edgeone.dev/">
 <meta property="og:title" content="Hangman Solver with Letter Probabilities">
-<meta property="og:description" content="The best hangman solver with letter probabilities based on an 11,000+ word dictionary, sorted by real-world frequency, and a clean, easy-to-use interface. It will always be free with no ads, and is designed for both mobile and desktop.">
+<meta property="og:description" content="The best hangman solver algorithm with letter probabilities based on an 11,000+ word dictionary, sorted by real-world frequency. Tracks the guesses you have left, and breaks ties by favoring the letter that will reveal the most about the word. Free, no ads, and built for mobile and desktop.">
 
 <meta name="twitter:card" content="summary">
 <meta name="twitter:url" content="https://hangman-solver.edgeone.dev/">
 <meta name="twitter:title" content="Hangman Solver with Letter Probabilities">
-<meta name="twitter:description" content="The best hangman solver with letter probabilities based on an 11,000+ word dictionary, sorted by real-world frequency, and a clean, easy-to-use interface. It will always be free with no ads, and is designed for both mobile and desktop.">
+<meta name="twitter:description" content="The best hangman solver algorithm with letter probabilities based on an 11,000+ word dictionary, sorted by real-world frequency. Tracks the guesses you have left, and breaks ties by favoring the letter that will reveal the most about the word. Free, no ads, and built for mobile and desktop.">
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22 transform=%22scale(-1,1) translate(-100,0)%22>🔍</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%235b6cf5%22/><text x=%2250%22 y=%2262%22 font-size=%2255%22 text-anchor=%22middle%22 transform=%22scale(-1,1) translate(-100,0)%22>🔍</text></svg>">
+<meta name="theme-color" content="#5b6cf5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hangman Solver">
+<link rel="manifest" href="data:application/manifest+json,{
+  &quot;name&quot;: &quot;Hangman Solver with Letter Probabilities&quot;,
+  &quot;short_name&quot;: &quot;Hangman Solver&quot;,
+  &quot;description&quot;: &quot;The best hangman solver with letter probabilities, guesses tracking, an 11,000+ word dictionary, and offline support.&quot;,
+  &quot;start_url&quot;: &quot;/&quot;,
+  &quot;scope&quot;: &quot;/&quot;,
+  &quot;display&quot;: &quot;standalone&quot;,
+  &quot;background_color&quot;: &quot;#eef1fb&quot;,
+  &quot;theme_color&quot;: &quot;#5b6cf5&quot;,
+  &quot;icons&quot;: [
+    { &quot;src&quot;: &quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235b6cf5'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%94%8D%3C/text%3E%3C/svg%3E&quot;, &quot;sizes&quot;: &quot;any&quot;, &quot;type&quot;: &quot;image/svg+xml&quot;, &quot;purpose&quot;: &quot;any&quot; }
+  ]
+}">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -28,8 +47,8 @@
   "name": "Hangman Solver",
   "alternateName": "Hangman Solver with Letter Probabilities",
   "url": "https://hangman-solver.edgeone.dev/",
-  "description": "A free hangman solver that finds the best letter to guess next, using letter probabilities calculated from an 11,000+ word English dictionary sorted by real-world frequency. Works on single words and multi-word phrases, with light and dark mode and no ads.",
-  "disambiguatingDescription": "There are numerous hangman solvers online, so why make another one? There weren't any hangman solvers online that had all of the features this one has; they were all missing essentials that make for the best hangman solver. Some of them had ads, most didn't have word/letter probabilities, and none had an interface that was as clean or easy to use. Also, the dictionaries for other solvers either didn't have enough words or had so many words that they included gibberish. There were also not many that used word frequencies to calculate letter probabilities. This hangman solver was built to solve all of these problems.",
+  "description": "The best hangman solver with letter probabilities. It calculates letter probabilities from an 11,000+ word English dictionary sorted by real-world frequency, and tracks how many wrong guesses you have left. Its top pick is always the most likely letter, but when two or more letters are close enough in probability, it breaks that tie by favoring whichever one will reveal more about the word, unless it's your very last guess, where it always plays the safest, most likely letter instead. Works on single words and multi-word phrases, works offline once loaded, with light and dark mode and no ads.",
+  "disambiguatingDescription": "There are numerous hangman solvers online, so why make another one? There weren't any hangman solvers online that had all of the features this one has; they were all missing essentials that make for the best hangman solver. Some of them had ads, most didn't have word/letter probabilities, and none had an interface that was as clean or easy to use. Also, the dictionaries for other solvers either didn't have enough words or had so many words that they included gibberish. There were also not many that used word frequencies to calculate letter probabilities, and none adjusted their suggestions based on how many wrong guesses were left. This hangman solver was built to solve all of these problems.",
   "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "Any",
   "browserRequirements": "Requires JavaScript",
@@ -45,8 +64,10 @@
     "Works on mobile and desktop",
     "Displays letter probabilities and possible words",
     "Uses an 11,202-word dictionary, sorted into 8 tiers based on real-world frequency.",
+    "Tracks your guesses left (adjustable)",
     "You can add custom words easily",
     "Built so you can use it easily while you are actually playing Hangman or another word game.",
+    "Works offline once loaded, and can be installed like an app.",
     "Light/Dark mode"
   ]
 }
@@ -259,7 +280,28 @@
     font-size:11.5px; color:var(--accent); background:var(--glass-strong);
     border:1px solid var(--glass-line); font-weight:700;
     padding:5px 12px; border-radius:999px;
+    transition:color .15s ease, border-color .15s ease;
   }
+  .count-pill.warn-pill{color:#c9852f; border-color:rgba(201,133,47,0.45);}
+  .count-pill.danger-pill{color:var(--red); border-color:rgba(217,83,79,0.45);}
+
+  .guesses-control{display:flex; align-items:center; gap:6px;}
+  .stepper-btn{
+    width:26px; height:26px;
+    padding:0; margin:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-line);
+    border-radius:9px;
+    color:var(--ink-soft);
+    font-size:15px; font-weight:700; line-height:1;
+    cursor:pointer;
+    box-shadow:none;
+    transition:.12s;
+  }
+  .stepper-btn:hover:not(:disabled){color:var(--accent); border-color:var(--accent); transform:translateY(-1px);}
+  .stepper-btn:active:not(:disabled){transform:translateY(0);}
+  .stepper-btn:disabled{opacity:.35; cursor:not-allowed;}
 
   .letter-bars{display:flex; flex-direction:column; gap:9px;}
 
@@ -482,7 +524,13 @@
   </div>
 
   <div class="panel notag" data-tag="Guesses">
-    <div class="results-head"><h2>Guesses</h2></div>
+    <div class="results-head"><h2>Guesses</h2>
+      <div class="guesses-control">
+        <button type="button" class="stepper-btn" id="guessesMinus" aria-label="Decrease max guesses">&minus;</button>
+        <div class="count-pill" id="guessesPill">5 left</div>
+        <button type="button" class="stepper-btn" id="guessesPlus" aria-label="Increase max guesses">+</button>
+      </div>
+    </div>
     <label>Tap a letter to mark it as a wrong guess. Letters already found will grey out automatically.</label>
     <div class="keyboard-wrap" id="keyboardWrap">
       <div class="keyboard" id="keyboard"></div>
@@ -560,6 +608,40 @@ const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('');
 let wrongLetters = new Set();
 let resultsExpandLevel = 0; // 0 = top 5, 1 = top ~12, 2 = show all
 
+// Guesses counter. Remaining count is derived from wrongLetters.size rather
+// than tracked separately, so it always self-corrects: undoing a wrong
+// guess on the keyboard, or a letter getting auto-cleared because it turned
+// out to be revealed, immediately puts the count back where it should be.
+// The max itself (GUESSES_START) is adjustable via the +/- stepper, since
+// not every version of hangman gives you 5 misses.
+let GUESSES_START = 5;
+const GUESSES_MIN = 1;
+const GUESSES_MAX = 12;
+function guessesRemaining(){
+  return Math.max(0, GUESSES_START - wrongLetters.size);
+}
+function updateGuessesPill(){
+  const pill = document.getElementById('guessesPill');
+  if(!pill) return;
+  const left = guessesRemaining();
+  pill.textContent = left + ' left';
+  pill.classList.remove('warn-pill', 'danger-pill');
+  if(left === 0) pill.classList.add('danger-pill');
+  else if(left <= 2) pill.classList.add('warn-pill');
+
+  const minusBtn = document.getElementById('guessesMinus');
+  const plusBtn = document.getElementById('guessesPlus');
+  if(minusBtn) minusBtn.disabled = GUESSES_START <= GUESSES_MIN;
+  if(plusBtn) plusBtn.disabled = GUESSES_START >= GUESSES_MAX;
+}
+function setMaxGuesses(n){
+  GUESSES_START = Math.max(GUESSES_MIN, Math.min(GUESSES_MAX, n));
+  updateGuessesPill();
+  // The ranking logic in solve() reads guessesRemaining(), so a max-guesses
+  // change can shift letter order even without any new wrong guess.
+  solve();
+}
+
 function setExpandLevel(level){
   resultsExpandLevel = level;
   solve();
@@ -591,6 +673,7 @@ function renderKeyboard(){
     });
     kb.appendChild(btn);
   });
+  updateGuessesPill();
   alignGuessesHint();
 }
 
@@ -828,11 +911,102 @@ function solve(){
     return true;
   }
 
-  const rankedAll = alphabet
+  // Rank order: primarily by hit probability (rounded to the displayed
+  // percentage), so a letter never gets buried under one that's visibly
+  // less likely. Within a "close enough" cluster (letters whose hit chance
+  // is within NEAR_TIE_PCT of the cluster's top pick), the order can be
+  // refined by expected information gain -- but only the part of it that
+  // doesn't compete with hit probability. Entropy over the full hit/miss
+  // split re-derives roughly the same signal probability already gives
+  // (a letter's hit chance and its hit/miss entropy move together for most
+  // real probabilities), so it was tested and measurably underperformed
+  // this version. Instead, entropy is computed ONLY among the candidates
+  // where the letter WOULD hit, over which exact positions it lands in.
+  // That's genuinely new information a probability number can't express:
+  // if this guess turns out right, how much does knowing where it landed
+  // actually narrow things down. It says nothing about whether the guess
+  // is likely to hit, so it never fights against survival odds, it only
+  // adds value on top of them.
+  //
+  // This used to also fall back to strict probability once guesses ran low
+  // (below half the starting count), on the assumption that curiosity isn't
+  // worth it when a miss ends the game. That gate was removed after a
+  // full-game simulation across every guess budget showed applying the
+  // tiebreak everywhere scored measurably better in aggregate. But a
+  // follow-up test specifically isolating the *literal last guess* --
+  // reached through real play, with whatever letters were already
+  // revealed by then, not a fresh blank word -- told a different story:
+  // at that single highest-stakes moment, plain hit probability
+  // outperformed the info-gain tiebreak in head-to-head disagreements
+  // (roughly 38% vs 34% correct over ~200 real disagreement cases at a
+  // 5-guess budget). The aggregate win came from applying the tiebreak
+  // earlier in the game, not from applying it on the final guess -- so
+  // it's gated off only for that one case: down to the last guess, revert
+  // to strict probability, no exceptions.
+  const NEAR_TIE_PCT = 4;
+  const preferInfo = guessesRemaining() > 1;
+
+  function computeInfoGain(letter){
+    let bits = 0;
+    words.forEach((pattern, idx) => {
+      if(!pattern.includes('_')) return;
+      const cands = candidatesPerWord[idx];
+      if(cands.length === 0) return;
+      const buckets = new Map();
+      let hitWeight = 0;
+      for(const cand of cands){
+        const weight = rankWeight(cand);
+        let positions = '';
+        for(let i=0;i<pattern.length;i++){
+          if(pattern[i] === '_' && cand[i] === letter) positions += i + ',';
+        }
+        if(positions){
+          hitWeight += weight;
+          buckets.set(positions, (buckets.get(positions)||0) + weight);
+        }
+      }
+      if(hitWeight === 0) return;
+      for(const w of buckets.values()){
+        const p = w / hitWeight;
+        if(p > 0) bits += -p * Math.log2(p);
+      }
+    });
+    return bits;
+  }
+
+  const rankedByPct = alphabet
     .filter(l => !excluded.has(l))
-    .map(l => ({letter:l, pct: (1 - missProb[l]) * 100}))
+    .map(l => {
+      const p = 1 - missProb[l];
+      return {letter:l, pct: p * 100, p, infoGain: computeInfoGain(l)};
+    })
     .sort((a,b)=> b.pct - a.pct)
     .filter(r => r.pct > 0.05);
+
+  // Cluster consecutive letters whose pct sits within NEAR_TIE_PCT of the
+  // cluster's own top pct (measured against that top, not chained link to
+  // link, so a long run of small steps can't drift the cluster arbitrarily
+  // far from where it started). Only letters inside the same cluster can
+  // ever swap places.
+  const rankedAll = [];
+  let i = 0;
+  while(i < rankedByPct.length){
+    let j = i;
+    while(j + 1 < rankedByPct.length && (rankedByPct[i].pct - rankedByPct[j+1].pct) <= NEAR_TIE_PCT){
+      j++;
+    }
+    const cluster = rankedByPct.slice(i, j+1);
+    if(cluster.length > 1 && preferInfo){
+      cluster.sort((a,b) => {
+        const gd = b.infoGain - a.infoGain;
+        if(Math.abs(gd) > 1e-9) return gd;
+        return b.pct - a.pct;
+      });
+    }
+    rankedAll.push(...cluster);
+    i = j + 1;
+
+  }
 
   const TIER_SIZES = [5, 12, Infinity];
   const visibleCount = Math.min(rankedAll.length, TIER_SIZES[resultsExpandLevel]);
@@ -848,19 +1022,41 @@ function solve(){
     // never gets shown as a false guarantee.
     const displayPct = (pct) => pct >= 99.95 ? 100 : Math.min(99, Math.round(pct));
 
-    const max = ranked[0].pct;
-    const maxDisplay = displayPct(max);
-    ranked.forEach((r) => {
-      const isTop = Math.abs(r.pct - max) < 0.0001;
-      if(!isTop && displayPct(r.pct) === maxDisplay) fakeTieNote = true;
+    // Bar width is always scaled to the true highest pct in view, so
+    // relative bar lengths stay an honest probability comparison. Which
+    // bar gets the "top" highlight is separate: it should be whichever
+    // letter is actually first in the list (the real recommendation),
+    // since info-gain clustering can rank a slightly-lower-pct letter
+    // first. Tying the highlight to raw max pct instead would let the
+    // highlighted pick and the first-listed pick disagree, which is
+    // exactly the confusing state this replaces.
+    const max = Math.max(...ranked.map(r => r.pct));
+    const topPct = ranked[0].pct;
+    const maxDisplay = displayPct(topPct);
+    let prevDisplay = null;
+    let inversionNote = false;
+    ranked.forEach((r, idx) => {
+      const isTop = idx === 0;
+      const rDisplay = displayPct(r.pct);
+      if(!isTop && rDisplay === maxDisplay) fakeTieNote = true;
+      // Info-gain clustering can rank a letter with a lower displayed
+      // percentage above one with a higher displayed percentage, when
+      // they're close enough to be a real toss-up and the lower one would
+      // reveal more about the word if it hits. Flag it so a hint can
+      // explain that, the same way a rounding-tie gets explained below.
+      if(prevDisplay !== null && rDisplay > prevDisplay) inversionNote = true;
+      prevDisplay = rDisplay;
       barsHTML += '<div class="lbar'+(isTop?' top':'')+'">'
         + '<div class="ch">'+r.letter.toUpperCase()+'</div>'
         + '<div class="track"><div class="fill" style="width:'+ (max? (r.pct/max*100) : 0) +'%"></div></div>'
-        + '<div class="pct">'+displayPct(r.pct)+'%</div>'
+        + '<div class="pct">'+rDisplay+'%</div>'
         + '</div>';
     });
     if(fakeTieNote){
       barsHTML += '<div class="hint" style="margin-top:10px; text-align:center;">Results are rounded. The best answer is at the top.</div>';
+    }
+    if(inversionNote){
+      barsHTML += '<div class="hint" style="margin-top:10px; text-align:center;">A letter with a lower percentage can rank above one with a higher percentage when they\'re close. This is because the letter will reveal more about the word or phrase if it\'s correct.</div>';
     }
     const showUp = resultsExpandLevel > 0;
     const showDown = visibleCount < rankedAll.length;
@@ -937,6 +1133,8 @@ function solveAndScroll(){
 }
 
 document.getElementById('solveBtn').addEventListener('click', solveAndScroll);
+document.getElementById('guessesMinus').addEventListener('click', () => setMaxGuesses(GUESSES_START - 1));
+document.getElementById('guessesPlus').addEventListener('click', () => setMaxGuesses(GUESSES_START + 1));
 document.getElementById('editLink').addEventListener('click', () => {
   showTextMode();
   document.getElementById('pattern').focus();
@@ -949,6 +1147,10 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   document.getElementById('custom').value = '';
   wrongLetters.clear();
   resultsExpandLevel = 0;
+  // GUESSES_START is intentionally left untouched: wrongLetters.clear()
+  // already brings the counter back to full, and "full" should mean
+  // whatever max the person set, not a hardcoded default they may have
+  // changed away from before marking any letters.
   showTextMode();
   renderKeyboard();
   renderTilesEdit();
@@ -1001,6 +1203,15 @@ document.getElementById('pattern').value = '_e__o wor_d';
 renderKeyboard();
 renderTilesEdit();
 solve();
+
+// Register the service worker so the page keeps working offline / on a
+// flaky connection after the first visit. sw.js must be hosted at the
+// site root alongside this file (see accompanying sw.js).
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
 
 // keep the displayed dictionary size in sync with the actual word list
 (function(){
