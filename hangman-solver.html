@@ -1056,7 +1056,7 @@ function solve(){
       barsHTML += '<div class="hint" style="margin-top:10px; text-align:center;">Results are rounded. The best answer is at the top.</div>';
     }
     if(inversionNote){
-      barsHTML += '<div class="hint" style="margin-top:10px; text-align:center;">A letter with a lower percentage can rank above one with a higher percentage when they\'re close. This is because the letter will reveal more about the word or phrase if it\'s correct.</div>';
+      barsHTML += '<div class="hint" style="margin-top:10px; text-align:center;">A lower percentage can rank above a higher one when they\'re close, because it will reveal more.</div>';
     }
     const showUp = resultsExpandLevel > 0;
     const showDown = visibleCount < rankedAll.length;
