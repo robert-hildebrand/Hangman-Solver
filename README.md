@@ -13,10 +13,12 @@ There are numerous hangman solvers online, so why make another one? I had notice
 -Uses an 11,202-word dictionary, sorted into 8 tiers based on real-world frequency.  
 -You can add custom words easily  
 -Built so you can use it easily while you are actually playing Hangman or another word game.  
--Light/Dark mode
+-Adjustable guesses counter  
+-Light/Dark mode  
+-Works offline
 
 **How it works:**  
-It uses letter frequency to calculate the probabilities. It has a very large dictionary sorted into 8 sections with different weightings, based on how frequently they are used, so common words are weighted higher than obscure words. It also has a spot to add custom words.
+It uses letter frequency to calculate the probabilities. It has a very large dictionary sorted into 8 sections with different weightings, based on how frequently they are used, so common words are weighted higher than obscure words. It also has a spot to add custom words. When letters are close in probability, it determines which letter reveals the most information, and then picks that letter.
 
 **How it was made:**  
 It is coded with Claude, but that is only because I don't know how to code. I spent a lot of time making the interface as intuitive, clean, and visually appealing as I could. When I was looking to find a website to host my HTML, I first stumbled on Tencent Cloud. It seemed good enough, and it was free, so I decided to use it, so that is why the website has the edgeone.dev domain.
