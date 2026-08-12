@@ -1,6 +1,6 @@
 // Service worker for Hangman Solver.
 // Host this file at the site root (same place as hangman-solver.html) so
-// its scope covers the whole site: https://hangman-solver.edgeone.dev/sw.js
+// its scope covers the whole site: https://hangmansolver.netlify.app/sw.js
 
 const CACHE_NAME = 'hangman-solver-v1';
 
