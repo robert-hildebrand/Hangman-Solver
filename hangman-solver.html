@@ -541,9 +541,6 @@
   <div id="warn"></div>
   <div id="output"></div>
 
-  <footer>
-    This solver checks your pattern against a <span id="wordCountFooter">10,000</span>-word English dictionary and suggests the letter most likely to appear next, leaning towards common, everyday words rather than obscure ones.
-  </footer>
 </div>
 
 <button id="themeToggle" type="button" class="theme-fab">
@@ -554,7 +551,7 @@
 <script>
 // Words are split into one array per frequency tier (tier 0 = extremely
 // common words like "the"/"and", the last tier = rare/specialized words).
-// To add a word, just find its rough frequency tier below and push it onto
+// To add a word, find its rough frequency tier below and push it onto
 // the end of that tier's array -- no counting, no index math, no need to
 // touch any other tier. WORDS and WORD_TIER are built automatically from
 // these arrays further down.
